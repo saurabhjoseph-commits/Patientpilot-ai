@@ -1,16 +1,22 @@
-import Header from "@/components/Header";
-import Footer from "@/components/home/Footer";
+import Sidebar from "@/components/admin/Sidebar";
+import Topbar from "@/components/admin/Topbar";
 
-export default function WebsiteLayout({
+export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <>
-      <Header />
-      <main className="pt-20">{children}</main>
-      <Footer />
-    </>
+    <div className="flex min-h-screen bg-slate-100">
+      <Sidebar />
+
+      <div className="flex-1">
+        <Topbar />
+
+        <main className="p-6">
+          {children}
+        </main>
+      </div>
+    </div>
   );
 }
