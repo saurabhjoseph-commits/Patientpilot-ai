@@ -1,21 +1,69 @@
+import Image from "next/image";
+import Link from "next/link";
+
 export default function Navbar() {
   return (
-    <header className="border-b bg-white">
+    <header className="sticky top-0 z-50 border-b bg-white shadow-sm">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-        <h1 className="text-2xl font-bold text-blue-600">
-          PatientPilot AI
-        </h1>
 
-        <nav className="hidden gap-8 md:flex">
-          <a href="#" className="hover:text-blue-600">Solutions</a>
-          <a href="#" className="hover:text-blue-600">Pricing</a>
-          <a href="#" className="hover:text-blue-600">About</a>
-          <a href="#" className="hover:text-blue-600">Contact</a>
+        {/* Logo */}
+        <Link href="/" className="flex items-center">
+          <Image
+            src="/images/logo.png"
+            alt="PatientPilot AI"
+            width={160}
+            height={55}
+            className="h-18 w-auto"
+            priority
+          />
+        </Link>
+
+        {/* Navigation */}
+        <nav className="hidden items-center gap-6 md:flex">
+          <Link
+            href="/"
+            className="text-gray-700 transition hover:text-blue-600"
+          >
+            Home
+          </Link>
+
+          <Link
+            href="/solutions"
+            className="text-gray-700 transition hover:text-blue-600"
+          >
+            Solutions
+          </Link>
+
+          <Link
+            href="/pricing"
+            className="text-gray-700 transition hover:text-blue-600"
+          >
+            Pricing
+          </Link>
+
+          <Link
+            href="/about"
+            className="text-gray-700 transition hover:text-blue-600"
+          >
+            About
+          </Link>
+
+          <Link
+            href="/contact"
+            className="text-gray-700 transition hover:text-blue-600"
+          >
+            Contact
+          </Link>
         </nav>
 
-        <button className="rounded-lg bg-blue-600 px-5 py-2 text-white hover:bg-blue-700">
+        {/* CTA Button */}
+        <Link
+          href="/book-demo"
+          className="rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white transition hover:bg-blue-700"
+        >
           Book Demo
-        </button>
+        </Link>
+
       </div>
     </header>
   );

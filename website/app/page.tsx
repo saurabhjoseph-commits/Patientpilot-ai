@@ -1,22 +1,48 @@
-import Navbar from "@/components/layout/Navbar";
+import Hero from "@/components/home/Hero";
+import TrustedBy from "@/components/home/TrustedBy";
+import Features from "@/components/home/Features";
+import ServicesPreview from "@/components/home/ServicesPreview";
+import Benefits from "@/components/home/Benefits";
+import WhyChooseUs from "@/components/home/WhyChooseUs";
+import Comparison from "@/components/home/Comparison";
+import HowItWorks from "@/components/home/HowItWorks";
+import AIDemo from "@/components/home/AIDemo";
+import Stats from "@/components/home/Stats";
+import Testimonials from "@/components/home/Testimonials";
+import PricingPreview from "@/components/home/PricingPreview";
+import FAQ from "@/components/home/FAQ";
+import CTA from "@/components/home/CTA";
 
 export default function Home() {
   return (
-    <>
-      <Navbar />
+    <main className="overflow-x-hidden">
+      <Hero />
 
-      <main className="min-h-screen bg-slate-50">
-        <section className="mx-auto max-w-7xl px-6 py-24">
-          <h1 className="text-5xl font-bold text-slate-900">
-            Never Miss Another Patient Call Again.
-          </h1>
+      <TrustedBy />
 
-          <p className="mt-6 text-xl text-slate-600">
-            PatientPilot AI helps dental practices answer calls, recover missed
-            appointments, automate follow-ups, and grow their practice with AI.
-          </p>
-        </section>
-      </main>
-    </>
+      <Features />
+
+      <ServicesPreview />
+
+      <Benefits />
+
+      <WhyChooseUs />
+
+      <Comparison />
+
+      <HowItWorks />
+
+      <AIDemo />
+
+      <Stats />
+
+      <Testimonials />
+
+      <PricingPreview />
+
+      <FAQ />
+
+      <CTA />
+    </main>
   );
 }
