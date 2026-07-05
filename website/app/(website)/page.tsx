@@ -1,4 +1,5 @@
 import Hero from "@/components/home/Hero";
+import DemoSection from "@/components/demo/DemoSection";
 import TrustedBy from "@/components/home/TrustedBy";
 import Features from "@/components/home/Features";
 import ServicesPreview from "@/components/home/ServicesPreview";
@@ -17,6 +18,9 @@ export default function Home() {
   return (
     <main className="overflow-x-hidden">
       <Hero />
+
+      {/* Sprint 1 - Interactive AI Demo */}
+      <DemoSection />
 
       <TrustedBy />
 
