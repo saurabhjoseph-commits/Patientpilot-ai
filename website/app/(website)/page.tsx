@@ -1,5 +1,5 @@
 import Hero from "@/components/home/hero/Hero";
-import DemoSection from "@/components/demo/DemoSection";
+import AIDemo from "@/components/home/AIDemo";
 import TrustedBy from "@/components/home/TrustedBy";
 import Features from "@/components/home/Features";
 import Benefits from "@/components/home/Benefits";
@@ -16,8 +16,8 @@ export default function Home() {
     <main className="overflow-x-hidden">
       <Hero />
 
-      {/* Interactive AI Demo */}
-      <DemoSection />
+      {/* AI Receptionist Demo */}
+      <AIDemo />
 
       <TrustedBy />
 

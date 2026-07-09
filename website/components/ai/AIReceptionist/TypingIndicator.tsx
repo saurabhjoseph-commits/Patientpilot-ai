@@ -1,12 +1,13 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { Bot } from "lucide-react";
 
 export default function TypingIndicator() {
   return (
     <div className="flex items-end gap-2">
-      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-cyan-600 text-white text-xs font-bold">
-        AI
+      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-cyan-600 text-white">
+        <Bot size={18} />
       </div>
 
       <div className="flex items-center gap-1 rounded-2xl rounded-bl-sm bg-white px-4 py-3 shadow-md">
