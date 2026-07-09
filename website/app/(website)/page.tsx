@@ -1,14 +1,11 @@
-import Hero from "@/components/home/Hero";
+import Hero from "@/components/home/hero/Hero";
 import DemoSection from "@/components/demo/DemoSection";
 import TrustedBy from "@/components/home/TrustedBy";
 import Features from "@/components/home/Features";
-import ServicesPreview from "@/components/home/ServicesPreview";
 import Benefits from "@/components/home/Benefits";
+import ROICalculator from "@/components/roi/ROICalculator";
+import TrustSection from "@/components/trust/TrustSection";
 import WhyChooseUs from "@/components/home/WhyChooseUs";
-import Comparison from "@/components/home/Comparison";
-import HowItWorks from "@/components/home/HowItWorks";
-import AIDemo from "@/components/home/AIDemo";
-import Stats from "@/components/home/Stats";
 import Testimonials from "@/components/home/Testimonials";
 import PricingPreview from "@/components/home/PricingPreview";
 import FAQ from "@/components/home/FAQ";
@@ -19,26 +16,20 @@ export default function Home() {
     <main className="overflow-x-hidden">
       <Hero />
 
-      {/* Sprint 1 - Interactive AI Demo */}
+      {/* Interactive AI Demo */}
       <DemoSection />
 
       <TrustedBy />
 
       <Features />
 
-      <ServicesPreview />
-
       <Benefits />
 
+      <ROICalculator />
+
+      <TrustSection />
+
       <WhyChooseUs />
-
-      <Comparison />
-
-      <HowItWorks />
-
-      <AIDemo />
-
-      <Stats />
 
       <Testimonials />
 
