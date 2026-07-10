@@ -1,4 +1,7 @@
 import { supabaseServer } from "@/lib/supabase-server";
+import {
+  buildDashboardAnalytics,
+} from "@/lib/dashboard-analytics";
 
 import DashboardOverview from "@/components/admin/DashboardOverview";
 import StatsGrid from "@/components/admin/StatsGrid";
@@ -6,18 +9,30 @@ import ActivityFeed from "@/components/admin/ActivityFeed";
 import QuickActions from "@/components/admin/QuickActions";
 import LeadsTable from "@/components/admin/LeadsTable";
 
-export default async function AdminPage() {
-  // Fetch Leads
-  const { data: contacts, error } = await supabaseServer
-    .from("contacts")
-    .select("*")
-    .order("created_at", { ascending: false });
+import DashboardFilters from "@/components/admin/analytics/DashboardFilters";
+import DashboardCharts from "@/components/admin/analytics/DashboardCharts";
 
-  // Fetch Appointments
-  const { data: appointments } = await supabaseServer
-    .from("appointments")
-    .select("*")
-    .order("created_at", { ascending: false });
+import DemoLauncher from "@/components/admin/DemoLauncher";
+
+// NEW
+import CallCenterDashboard from "@/components/call-center/CallCenterDashboard";
+
+export default async function AdminPage() {
+  const { data: contacts, error } =
+    await supabaseServer
+      .from("contacts")
+      .select("*")
+      .order("created_at", {
+        ascending: false,
+      });
+
+  const { data: appointments } =
+    await supabaseServer
+      .from("appointments")
+      .select("*")
+      .order("created_at", {
+        ascending: false,
+      });
 
   if (error) {
     return (
@@ -27,69 +42,92 @@ export default async function AdminPage() {
             Error Loading Dashboard
           </h1>
 
-          <p className="mt-4">{error.message}</p>
+          <p className="mt-4">
+            {error.message}
+          </p>
         </div>
       </main>
     );
   }
 
-  const totalLeads = contacts?.length ?? 0;
-
-  const totalAppointments =
-    appointments?.length ?? 0;
-
-  const today = new Date().toDateString();
-
-  const aiCallsToday =
-    appointments?.filter(
-      (appointment) =>
-        new Date(
-          appointment.created_at
-        ).toDateString() === today
-    ).length ?? 0;
-
-  const revenuePotential =
-    totalAppointments * 150;
+  const analytics =
+    buildDashboardAnalytics(
+      contacts ?? [],
+      appointments ?? []
+    );
 
   return (
     <main className="min-h-screen bg-slate-100 p-8">
       <div className="mx-auto max-w-7xl">
 
-        {/* Dashboard Header */}
+        <DashboardFilters />
+
+        <DemoLauncher />
 
         <DashboardOverview
-          aiCallsToday={aiCallsToday}
+          aiCallsToday={
+            analytics.aiCallsToday
+          }
         />
-
-        {/* KPI Cards */}
 
         <StatsGrid
-          totalLeads={totalLeads}
-          totalAppointments={totalAppointments}
-          aiCallsToday={aiCallsToday}
-          revenuePotential={revenuePotential}
+          totalLeads={
+            analytics.totalLeads
+          }
+          totalAppointments={
+            analytics.totalAppointments
+          }
+          aiCallsToday={
+            analytics.aiCallsToday
+          }
+          revenuePotential={
+            analytics.revenuePotential
+          }
         />
 
-        {/* Activity + Quick Actions */}
+        <section className="mb-10">
+          <DashboardCharts
+            analytics={analytics}
+          />
+        </section>
 
         <div className="mb-10 grid gap-8 lg:grid-cols-3">
-
           <div className="lg:col-span-2">
             <ActivityFeed
               contacts={contacts ?? []}
-              appointments={appointments ?? []}
+              appointments={
+                appointments ?? []
+              }
             />
           </div>
 
           <QuickActions />
-
         </div>
-
-        {/* Leads */}
 
         <LeadsTable
           leads={contacts ?? []}
         />
+
+        {/* ==========================
+            AI CALL CENTER
+        =========================== */}
+
+        <section className="mt-16">
+          <div className="mb-8">
+            <h2 className="text-3xl font-bold text-slate-900">
+              AI Call Center
+            </h2>
+
+            <p className="mt-2 text-slate-600">
+              Monitor live patient calls,
+              AI conversations,
+              appointment booking,
+              and call transcripts.
+            </p>
+          </div>
+
+          <CallCenterDashboard />
+        </section>
 
       </div>
     </main>
