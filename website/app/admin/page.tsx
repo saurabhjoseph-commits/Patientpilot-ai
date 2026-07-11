@@ -6,7 +6,7 @@ import {
 import DashboardOverview from "@/components/admin/DashboardOverview";
 import StatsGrid from "@/components/admin/StatsGrid";
 import ActivityFeed from "@/components/admin/ActivityFeed";
-import QuickActions from "@/components/admin/QuickActions";
+import DashboardQuickActions from "@/components/admin/DashboardQuickActions";
 import LeadsTable from "@/components/admin/LeadsTable";
 
 import DashboardFilters from "@/components/admin/analytics/DashboardFilters";
@@ -14,7 +14,6 @@ import DashboardCharts from "@/components/admin/analytics/DashboardCharts";
 
 import DemoLauncher from "@/components/admin/DemoLauncher";
 
-// NEW
 import CallCenterDashboard from "@/components/call-center/CallCenterDashboard";
 
 export default async function AdminPage() {
@@ -58,8 +57,7 @@ export default async function AdminPage() {
 
   return (
     <main className="min-h-screen bg-slate-100 p-8">
-      <div className="mx-auto max-w-7xl">
-
+      <div className="mx-auto max-w-7xl space-y-8">
         <DashboardFilters />
 
         <DemoLauncher />
@@ -85,13 +83,11 @@ export default async function AdminPage() {
           }
         />
 
-        <section className="mb-10">
-          <DashboardCharts
-            analytics={analytics}
-          />
-        </section>
+        <DashboardCharts
+          analytics={analytics}
+        />
 
-        <div className="mb-10 grid gap-8 lg:grid-cols-3">
+        <div className="grid gap-8 lg:grid-cols-3">
           <div className="lg:col-span-2">
             <ActivityFeed
               contacts={contacts ?? []}
@@ -101,18 +97,14 @@ export default async function AdminPage() {
             />
           </div>
 
-          <QuickActions />
+          <DashboardQuickActions />
         </div>
 
         <LeadsTable
           leads={contacts ?? []}
         />
 
-        {/* ==========================
-            AI CALL CENTER
-        =========================== */}
-
-        <section className="mt-16">
+        <section className="pt-10">
           <div className="mb-8">
             <h2 className="text-3xl font-bold text-slate-900">
               AI Call Center
@@ -128,7 +120,6 @@ export default async function AdminPage() {
 
           <CallCenterDashboard />
         </section>
-
       </div>
     </main>
   );

@@ -6,7 +6,7 @@ import { signOut } from "@/lib/auth";
 export default function LogoutButton() {
   const router = useRouter();
 
-  async function logout() {
+  async function handleLogout() {
     await signOut();
 
     router.push("/login");
@@ -16,7 +16,7 @@ export default function LogoutButton() {
 
   return (
     <button
-      onClick={logout}
+      onClick={handleLogout}
       className="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700"
     >
       Logout

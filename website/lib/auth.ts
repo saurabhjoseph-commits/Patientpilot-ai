@@ -1,10 +1,12 @@
-import { supabaseBrowser } from "./supabase-browser";
+import { createClient } from "@/lib/supabase/browser";
 
 export async function signUp(
   email: string,
   password: string
 ) {
-  return await supabaseBrowser.auth.signUp({
+  const supabase = createClient();
+
+  return await supabase.auth.signUp({
     email,
     password,
   });
@@ -14,20 +16,26 @@ export async function signIn(
   email: string,
   password: string
 ) {
-  return await supabaseBrowser.auth.signInWithPassword({
+  const supabase = createClient();
+
+  return await supabase.auth.signInWithPassword({
     email,
     password,
   });
 }
 
 export async function signOut() {
-  return await supabaseBrowser.auth.signOut();
+  const supabase = createClient();
+
+  return await supabase.auth.signOut();
 }
 
 export async function getCurrentUser() {
+  const supabase = createClient();
+
   const {
     data: { user },
-  } = await supabaseBrowser.auth.getUser();
+  } = await supabase.auth.getUser();
 
   return user;
 }
@@ -35,7 +43,9 @@ export async function getCurrentUser() {
 export async function resetPassword(
   email: string
 ) {
-  return await supabaseBrowser.auth.resetPasswordForEmail(
+  const supabase = createClient();
+
+  return await supabase.auth.resetPasswordForEmail(
     email
   );
 }
