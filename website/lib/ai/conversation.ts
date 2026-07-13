@@ -8,18 +8,10 @@ import type {
 
 /**
  * ============================================================
- * PatientPilot AI Conversation Engine
+ * PatientPilot AI
+ * Conversation Utilities
  * ============================================================
  */
-
-export interface ConversationDecision {
-  nextState: AIConversationState;
-  intent: AIIntent;
-  completed: boolean;
-  shouldHangup: boolean;
-  needsHuman: boolean;
-  missingFields: string[];
-}
 
 const REQUIRED_APPOINTMENT_FIELDS: (keyof AppointmentData)[] = [
   "patientName",
@@ -37,21 +29,92 @@ export function getMissingAppointmentFields(
 ): string[] {
   return REQUIRED_APPOINTMENT_FIELDS.filter((field) => {
     const value = appointment[field];
-    return !value || String(value).trim() === "";
+
+    return (
+      value === undefined ||
+      value === null ||
+      String(value).trim() === ""
+    );
   }).map(String);
 }
 
 /**
- * Determines whether all appointment information has been collected.
+ * Returns true if all appointment fields exist.
  */
 export function isAppointmentComplete(
   appointment: Partial<AppointmentData>
 ): boolean {
-  return getMissingAppointmentFields(appointment).length === 0;
+  return (
+    getMissingAppointmentFields(appointment)
+      .length === 0
+  );
 }
 
 /**
- * Determines the next conversational state.
+ * Basic keyword intent detection.
+ */
+export function detectIntent(
+  text: string
+): AIIntent {
+  const value = text.toLowerCase();
+
+  if (
+    value.includes("book") ||
+    value.includes("appointment")
+  ) {
+    return "book_appointment";
+  }
+
+  if (
+    value.includes("reschedule") ||
+    value.includes("change")
+  ) {
+    return "reschedule_appointment";
+  }
+
+  if (value.includes("cancel")) {
+    return "cancel_appointment";
+  }
+
+  if (value.includes("insurance")) {
+    return "insurance";
+  }
+
+  if (
+    value.includes("price") ||
+    value.includes("cost")
+  ) {
+    return "pricing";
+  }
+
+  if (
+    value.includes("hours") ||
+    value.includes("open")
+  ) {
+    return "office_hours";
+  }
+
+  if (
+    value.includes("pain") ||
+    value.includes("bleeding") ||
+    value.includes("emergency")
+  ) {
+    return "emergency";
+  }
+
+  if (
+    value.includes("human") ||
+    value.includes("person") ||
+    value.includes("staff")
+  ) {
+    return "human_agent";
+  }
+
+  return "unknown";
+}
+
+/**
+ * Determine the next conversation state.
  */
 export function determineNextState(
   session: AIConversationSession
@@ -82,76 +145,7 @@ export function determineNextState(
 }
 
 /**
- * Basic keyword intent detection.
- * Later this can be replaced with GPT function-calling.
- */
-export function detectIntent(
-  text: string
-): AIIntent {
-  const value = text.toLowerCase();
-
-  if (
-    value.includes("book") ||
-    value.includes("appointment")
-  ) {
-    return "book_appointment";
-  }
-
-  if (
-    value.includes("reschedule") ||
-    value.includes("change appointment")
-  ) {
-    return "reschedule_appointment";
-  }
-
-  if (
-    value.includes("cancel")
-  ) {
-    return "cancel_appointment";
-  }
-
-  if (
-    value.includes("insurance")
-  ) {
-    return "insurance";
-  }
-
-  if (
-    value.includes("price") ||
-    value.includes("cost")
-  ) {
-    return "pricing";
-  }
-
-  if (
-    value.includes("hours") ||
-    value.includes("open")
-  ) {
-    return "office_hours";
-  }
-
-  if (
-    value.includes("pain") ||
-    value.includes("bleeding") ||
-    value.includes("emergency")
-  ) {
-    return "emergency";
-  }
-
-  if (
-    value.includes("person") ||
-    value.includes("human") ||
-    value.includes("staff")
-  ) {
-    return "human_agent";
-  }
-
-  return "unknown";
-}
-
-/**
- * Determines whether the AI should transfer
- * the caller to a human.
+ * Returns true if a human should take over.
  */
 export function needsHumanAgent(
   intent: AIIntent
@@ -163,14 +157,13 @@ export function needsHumanAgent(
 }
 
 /**
- * Determines whether the conversation
- * should end.
+ * Determines if the call should end.
  */
 export function shouldEndConversation(
   state: AIConversationState,
-  human: boolean
+  needsHuman: boolean
 ): boolean {
-  if (human) {
+  if (needsHuman) {
     return true;
   }
 
@@ -181,7 +174,7 @@ export function shouldEndConversation(
 }
 
 /**
- * Performs a complete conversation analysis.
+ * Full conversation analysis.
  */
 export function analyzeConversation(
   session: AIConversationSession,
@@ -189,27 +182,34 @@ export function analyzeConversation(
 ): ConversationAnalysis {
   const intent = detectIntent(latestMessage);
 
-  const nextState = determineNextState(session);
-
-  const human = needsHumanAgent(intent);
-
-  const completed =
-    nextState === "completed";
+  const nextState =
+    determineNextState(session);
 
   const missingFields =
     getMissingAppointmentFields(
       session.appointment
     );
 
+  const completed =
+    nextState === "completed";
+
+  const human =
+    needsHumanAgent(intent);
+
   return {
     nextState,
     intent,
     completed,
-    shouldHangup: shouldEndConversation(
-      nextState,
-      human
-    ),
+    shouldHangup:
+      shouldEndConversation(
+        nextState,
+        human
+      ),
     needsHuman: human,
     missingFields,
+    confidence: Math.max(
+      0,
+      100 - missingFields.length * 20
+    ),
   };
 }
