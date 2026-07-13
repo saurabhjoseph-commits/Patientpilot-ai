@@ -2,9 +2,12 @@ import VoiceResponse from "twilio/lib/twiml/VoiceResponse";
 import { NextRequest, NextResponse } from "next/server";
 
 import {
-  continueConversation,
   startConversation,
 } from "@/lib/ai";
+
+import {
+  executeConversationWorkflow,
+} from "@/lib/workflows/conversation-workflow";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -89,19 +92,46 @@ export async function POST(req: NextRequest) {
     }
 
     /**
-     * Ask OpenAI.
-     */
-    const result = await continueConversation(
-      callSid,
-      speechResult
-    );
+ * Execute the complete business workflow.
+ */
+const workflow =
+  await executeConversationWorkflow(
+    callSid,
+    speechResult
+  );
 
-    twiml.say(
-      {
-        voice: "alice",
-      },
-      result.response.message
-    );
+const result = workflow.ai;
+
+twiml.say(
+  {
+    voice: "alice",
+  },
+  result.response.message
+);
+
+/**
+ * Log completed business workflow.
+ */
+if (workflow.appointment) {
+  console.log(
+    "✅ Appointment Created:",
+    workflow.appointment.id
+  );
+}
+
+if (workflow.patient) {
+  console.log(
+    "✅ Patient Synced:",
+    workflow.patient.id
+  );
+}
+
+if (workflow.summary) {
+  console.log(
+    "✅ Summary Saved:",
+    workflow.summary.id
+  );
+}
 
     /**
      * Conversation finished.

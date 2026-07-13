@@ -1,72 +1,27 @@
-import { NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabase-server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(request: Request) {
+import { createAppointmentService } from "@/lib/appointments/service";
+import { listAppointmentsService } from "@/lib/appointments/service";
+
+/**
+ * ============================================================
+ * PatientPilot AI
+ * Appointments API
+ * ============================================================
+ */
+
+/**
+ * GET /api/appointments
+ * Returns appointments.
+ */
+export async function GET() {
   try {
-    const body = await request.json();
-
-    const {
-      patientName,
-      phone,
-      email,
-      service,
-      appointmentDate,
-      appointmentTime,
-      notes,
-    } = body;
-
-    if (
-      !patientName ||
-      !service ||
-      !appointmentDate ||
-      !appointmentTime
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Missing required fields.",
-        },
-        {
-          status: 400,
-        }
-      );
-    }
-
-    const { data, error } = await supabaseServer
-      .from("appointments")
-      .insert([
-        {
-          patient_name: patientName,
-          phone,
-          email,
-          service,
-          appointment_date: appointmentDate,
-          appointment_time: appointmentTime,
-          notes,
-          status: "Booked",
-          source: "AI Receptionist",
-        },
-      ])
-      .select()
-      .single();
-
-    if (error) {
-      console.error(error);
-
-      return NextResponse.json(
-        {
-          success: false,
-          message: error.message,
-        },
-        {
-          status: 500,
-        }
-      );
-    }
+    const appointments =
+      await listAppointmentsService();
 
     return NextResponse.json({
       success: true,
-      appointment: data,
+      appointments,
     });
   } catch (error) {
     console.error(error);
@@ -74,7 +29,81 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         success: false,
-        message: "Server Error",
+        message: "Unable to load appointments.",
+      },
+      {
+        status: 500,
+      }
+    );
+  }
+}
+
+/**
+ * POST /api/appointments
+ * Creates a new appointment.
+ */
+export async function POST(
+  request: NextRequest
+) {
+  try {
+    const body = await request.json();
+
+    const {
+      call_id,
+      patient_name,
+      phone,
+      appointment_type,
+      dentist,
+      appointment_date,
+      appointment_time,
+    } = body;
+
+    const appointment =
+      await createAppointmentService({
+        clinicName:
+          dentist ??
+          "PatientPilot Demo Clinic",
+
+        patientName:
+          patient_name,
+
+        phoneNumber:
+          phone,
+
+        appointmentDate:
+          appointment_date,
+
+        appointmentTime:
+          appointment_time,
+
+        reason:
+          appointment_type,
+
+        callSid:
+          call_id,
+
+        notes: "",
+      });
+
+    return NextResponse.json(
+      {
+        success: true,
+        appointment,
+      },
+      {
+        status: 201,
+      }
+    );
+  } catch (error) {
+    console.error(error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        message:
+          error instanceof Error
+            ? error.message
+            : "Unable to create appointment.",
       },
       {
         status: 500,
