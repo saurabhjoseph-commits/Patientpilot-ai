@@ -6,8 +6,11 @@
  */
 
 /**
- * Conversation lifecycle.
+ * ============================================================
+ * Conversation Lifecycle
+ * ============================================================
  */
+
 export type AIConversationState =
   | "idle"
   | "greeting"
@@ -21,8 +24,11 @@ export type AIConversationState =
   | "ended";
 
 /**
- * Intent detected from the caller.
+ * ============================================================
+ * Supported Intents
+ * ============================================================
  */
+
 export type AIIntent =
   | "unknown"
   | "book_appointment"
@@ -36,27 +42,40 @@ export type AIIntent =
   | "human_agent";
 
 /**
- * Conversation message.
+ * ============================================================
+ * Conversation Message
+ * ============================================================
  */
+
 export interface AIMessage {
   role: "system" | "user" | "assistant";
   content: string;
 }
 
 /**
- * Appointment information extracted during the call.
+ * ============================================================
+ * Appointment Information
+ * ============================================================
  */
+
 export interface AppointmentData {
   patientName?: string;
+
   phoneNumber?: string;
+
   appointmentDate?: string;
+
   appointmentTime?: string;
+
   reason?: string;
 }
 
 /**
- * Active AI conversation.
+ * ============================================================
+ * Active Conversation Session
+ * ============================================================
  */
+
 export interface AIConversationSession {
   callSid: string;
 
@@ -74,8 +93,11 @@ export interface AIConversationSession {
 }
 
 /**
- * Request sent to the OpenAI client.
+ * ============================================================
+ * OpenAI Request
+ * ============================================================
  */
+
 export interface GenerateResponseParams {
   session: AIConversationSession;
 
@@ -83,11 +105,19 @@ export interface GenerateResponseParams {
 }
 
 /**
- * AI response returned from OpenAI.
+ * Backward compatibility.
  */
+export type AICompletionRequest = GenerateResponseParams;
+
+/**
+ * ============================================================
+ * AI Response
+ * ============================================================
+ */
+
 export interface AIResponse {
   /**
-   * Text that Twilio will speak.
+   * Text Twilio will speak.
    */
   message: string;
 
@@ -107,14 +137,60 @@ export interface AIResponse {
   appointment?: Partial<AppointmentData>;
 
   /**
-   * End the phone call after this response.
+   * End the phone call.
    */
   shouldHangup?: boolean;
 }
 
 /**
- * OpenAI token usage.
+ * ============================================================
+ * Conversation Analysis
+ * ============================================================
  */
+
+export interface ConversationAnalysis {
+  /**
+   * Next state after processing.
+   */
+  nextState: AIConversationState;
+
+  /**
+   * Detected intent.
+   */
+  intent: AIIntent;
+
+  /**
+   * Conversation completed.
+   */
+  completed: boolean;
+
+  /**
+   * Whether the AI should end the call.
+   */
+  shouldHangup: boolean;
+
+  /**
+   * Human transfer required.
+   */
+  needsHuman: boolean;
+
+  /**
+   * Remaining appointment fields.
+   */
+  missingFields: string[];
+
+  /**
+   * Overall confidence (0-100).
+   */
+  confidence?: number;
+}
+
+/**
+ * ============================================================
+ * OpenAI Token Usage
+ * ============================================================
+ */
+
 export interface TokenUsage {
   inputTokens: number;
 
@@ -124,10 +200,24 @@ export interface TokenUsage {
 }
 
 /**
- * Result returned from the AI client.
+ * ============================================================
+ * AI Completion Result
+ * ============================================================
  */
+
 export interface AICompletionResult {
+  /**
+   * AI response returned to Twilio.
+   */
   response: AIResponse;
 
+  /**
+   * Conversation analysis.
+   */
+  analysis: ConversationAnalysis;
+
+  /**
+   * OpenAI usage statistics.
+   */
   usage: TokenUsage;
 }

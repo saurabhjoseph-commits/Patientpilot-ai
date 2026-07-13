@@ -79,6 +79,13 @@ export async function generateResponse(
   const responseText =
     completion.choices[0]?.message?.content?.trim() ??
     "I'm sorry, I didn't quite catch that. Could you please repeat that?";
+    const state = session.state;
+
+const intent = session.intent;
+
+const appointment = session.appointment;
+
+const shouldHangup = false;
 
   /**
    * Future versions will use structured outputs to
@@ -86,27 +93,29 @@ export async function generateResponse(
    * extraction automatically.
    */
   return {
-    response: {
-      message: responseText,
+  response: {
+    message: responseText,
+    state,
+    intent,
+    appointment,
+    shouldHangup,
+  },
 
-      state: session.state,
+  analysis: {
+    nextState: state,
+    intent,
+    completed: state === "completed",
+    shouldHangup,
+    needsHuman:
+      intent === "human_agent" ||
+      intent === "emergency",
+    missingFields: [],
+  },
 
-      intent: session.intent,
-
-      appointment: {},
-
-      shouldHangup: false,
-    },
-
-    usage: {
-      inputTokens:
-        completion.usage?.prompt_tokens ?? 0,
-
-      outputTokens:
-        completion.usage?.completion_tokens ?? 0,
-
-      totalTokens:
-        completion.usage?.total_tokens ?? 0,
-    },
-  };
+  usage: {
+    inputTokens: completion.usage?.prompt_tokens ?? 0,
+    outputTokens: completion.usage?.completion_tokens ?? 0,
+    totalTokens: completion.usage?.total_tokens ?? 0,
+  },
+};
 }
