@@ -1,223 +1,63 @@
 /**
  * ============================================================
  * PatientPilot AI
- * Shared Types
+ * RC4 Compatibility Layer
+ * ============================================================
+ *
+ * Canonical domain models live under ./core.
+ * During RC4, legacy modules continue importing from "./types".
+ */
+
+export * from "./core";
+
+/* ============================================================
+ * Legacy Type Aliases
  * ============================================================
  */
+
+export type ConversationIntent =
+  import("./core").AIIntent;
+
+export type ConversationMessage =
+  import("./core").AIMessage;
+
+export type IntentAnalysis =
+  import("./core").ConversationAnalysis;
 
 /**
  * ============================================================
- * Conversation Lifecycle
+ * Prompt Builder Compatibility
  * ============================================================
  */
 
-export type AIConversationState =
-  | "idle"
-  | "greeting"
-  | "collecting_name"
-  | "collecting_phone"
-  | "collecting_reason"
-  | "collecting_date"
-  | "confirming"
-  | "completed"
-  | "handoff"
-  | "ended";
+export interface AIContext {
+  clinicName: string;
 
-/**
- * ============================================================
- * Supported Intents
- * ============================================================
- */
+  timezone: string;
 
-export type AIIntent =
-  | "unknown"
-  | "book_appointment"
-  | "reschedule_appointment"
-  | "cancel_appointment"
-  | "office_hours"
-  | "insurance"
-  | "pricing"
-  | "emergency"
-  | "general_question"
-  | "human_agent";
+  officeHours: string;
 
-/**
- * ============================================================
- * Conversation Message
- * ============================================================
- */
+  providers: string[];
 
-export interface AIMessage {
-  role: "system" | "user" | "assistant";
-  content: string;
+  acceptedInsurance: string[];
+
+  appointmentTypes: string[];
 }
 
 /**
- * ============================================================
- * Appointment Information
- * ============================================================
+ * Legacy prompt state used by prompts.ts
  */
+export interface PromptConversationState {
+  callId: string;
 
-export interface AppointmentData {
-  patientName?: string;
+  status: string;
 
-  phoneNumber?: string;
-
-  appointmentDate?: string;
-
-  appointmentTime?: string;
-
-  reason?: string;
+  messages: ConversationMessage[];
 }
 
 /**
- * ============================================================
- * Active Conversation Session
- * ============================================================
+ * Older modules import ConversationState.
+ * Keep it pointing to the prompt model during migration.
  */
-
-export interface AIConversationSession {
-  callSid: string;
-
-  state: AIConversationState;
-
-  intent: AIIntent;
-
-  messages: AIMessage[];
-
-  appointment: AppointmentData;
-
-  createdAt: string;
-
-  updatedAt: string;
-}
-
-/**
- * ============================================================
- * OpenAI Request
- * ============================================================
- */
-
-export interface GenerateResponseParams {
-  session: AIConversationSession;
-
-  userMessage: string;
-}
-
-/**
- * Backward compatibility.
- */
-export type AICompletionRequest = GenerateResponseParams;
-
-/**
- * ============================================================
- * AI Response
- * ============================================================
- */
-
-export interface AIResponse {
-  /**
-   * Text Twilio will speak.
-   */
-  message: string;
-
-  /**
-   * Updated conversation state.
-   */
-  state?: AIConversationState;
-
-  /**
-   * Detected caller intent.
-   */
-  intent?: AIIntent;
-
-  /**
-   * Extracted appointment information.
-   */
-  appointment?: Partial<AppointmentData>;
-
-  /**
-   * End the phone call.
-   */
-  shouldHangup?: boolean;
-}
-
-/**
- * ============================================================
- * Conversation Analysis
- * ============================================================
- */
-
-export interface ConversationAnalysis {
-  /**
-   * Next state after processing.
-   */
-  nextState: AIConversationState;
-
-  /**
-   * Detected intent.
-   */
-  intent: AIIntent;
-
-  /**
-   * Conversation completed.
-   */
-  completed: boolean;
-
-  /**
-   * Whether the AI should end the call.
-   */
-  shouldHangup: boolean;
-
-  /**
-   * Human transfer required.
-   */
-  needsHuman: boolean;
-
-  /**
-   * Remaining appointment fields.
-   */
-  missingFields: string[];
-
-  /**
-   * Overall confidence (0-100).
-   */
-  confidence?: number;
-}
-
-/**
- * ============================================================
- * OpenAI Token Usage
- * ============================================================
- */
-
-export interface TokenUsage {
-  inputTokens: number;
-
-  outputTokens: number;
-
-  totalTokens: number;
-}
-
-/**
- * ============================================================
- * AI Completion Result
- * ============================================================
- */
-
-export interface AICompletionResult {
-  /**
-   * AI response returned to Twilio.
-   */
-  response: AIResponse;
-
-  /**
-   * Conversation analysis.
-   */
-  analysis: ConversationAnalysis;
-
-  /**
-   * OpenAI usage statistics.
-   */
-  usage: TokenUsage;
-}
+export type ConversationState =
+  import("./core").AIConversationSession;

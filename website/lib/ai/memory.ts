@@ -20,7 +20,10 @@ export interface MemoryEntity {
 }
 
 export interface ConversationMemory {
-  callSid: string;
+  /**
+   * Canonical call identifier.
+   */
+  callId: string;
 
   currentState: AIConversationState;
 
@@ -57,16 +60,16 @@ function now(): string {
  * Creates memory for a new call.
  */
 export function createMemory(
-  session: AIConversationSession
+  session: AIConversationSession,
 ): ConversationMemory {
-  const existing = memoryStore.get(session.callSid);
+  const existing = memoryStore.get(session.callId);
 
   if (existing) {
     return existing;
   }
 
   const memory: ConversationMemory = {
-    callSid: session.callSid,
+    callId: session.callId,
 
     currentState: session.state,
 
@@ -89,16 +92,20 @@ export function createMemory(
     updatedAt: now(),
   };
 
-  memoryStore.set(session.callSid, memory);
+  memoryStore.set(session.callId, memory);
 
   return memory;
 }
 
 /**
  * Returns memory for a call.
+ *
+ * Compatibility:
+ * Existing callers still pass callSid.
+ * Internally we treat it as the canonical callId.
  */
 export function getMemory(
-  callSid: string
+  callSid: string,
 ): ConversationMemory | undefined {
   return memoryStore.get(callSid);
 }
@@ -107,10 +114,10 @@ export function getMemory(
  * Creates memory if needed.
  */
 export function ensureMemory(
-  session: AIConversationSession
+  session: AIConversationSession,
 ): ConversationMemory {
   return (
-    getMemory(session.callSid) ??
+    getMemory(session.callId) ??
     createMemory(session)
   );
 }
@@ -119,18 +126,18 @@ export function ensureMemory(
  * Saves memory.
  */
 export function saveMemory(
-  memory: ConversationMemory
+  memory: ConversationMemory,
 ): void {
   memory.updatedAt = now();
 
-  memoryStore.set(memory.callSid, memory);
+  memoryStore.set(memory.callId, memory);
 }
 
 /**
  * Removes memory after call completion.
  */
 export function deleteMemory(
-  callSid: string
+  callSid: string,
 ): boolean {
   return memoryStore.delete(callSid);
 }
@@ -140,7 +147,7 @@ export function deleteMemory(
  */
 export function updateMemoryState(
   callSid: string,
-  state: AIConversationState
+  state: AIConversationState,
 ): void {
   const memory = getMemory(callSid);
 
@@ -156,7 +163,7 @@ export function updateMemoryState(
  */
 export function updateMemoryIntent(
   callSid: string,
-  intent: AIIntent
+  intent: AIIntent,
 ): void {
   const memory = getMemory(callSid);
 
@@ -172,7 +179,7 @@ export function updateMemoryIntent(
  */
 export function updateAppointmentMemory(
   callSid: string,
-  appointment: Partial<AppointmentData>
+  appointment: Partial<AppointmentData>,
 ): void {
   const memory = getMemory(callSid);
 
@@ -191,7 +198,7 @@ export function updateAppointmentMemory(
  */
 export function rememberPatientMessage(
   callSid: string,
-  message: string
+  message: string,
 ): void {
   const memory = getMemory(callSid);
 
@@ -209,7 +216,7 @@ export function rememberPatientMessage(
  */
 export function rememberAIMessage(
   callSid: string,
-  message: string
+  message: string,
 ): void {
   const memory = getMemory(callSid);
 
@@ -225,7 +232,7 @@ export function rememberAIMessage(
  */
 export function rememberQuestion(
   callSid: string,
-  question: string
+  question: string,
 ): void {
   const memory = getMemory(callSid);
 
@@ -241,7 +248,7 @@ export function rememberQuestion(
  */
 export function updateMissingFields(
   callSid: string,
-  fields: string[]
+  fields: string[],
 ): void {
   const memory = getMemory(callSid);
 
@@ -257,7 +264,7 @@ export function updateMissingFields(
  */
 export function updateConfidence(
   callSid: string,
-  confidence: number
+  confidence: number,
 ): void {
   const memory = getMemory(callSid);
 
@@ -275,14 +282,14 @@ export function rememberEntity(
   callSid: string,
   key: string,
   value: string,
-  confidence: number
+  confidence: number,
 ): void {
   const memory = getMemory(callSid);
 
   if (!memory) return;
 
   const existing = memory.entities.find(
-    (entity) => entity.key === key
+    (entity) => entity.key === key,
   );
 
   if (existing) {

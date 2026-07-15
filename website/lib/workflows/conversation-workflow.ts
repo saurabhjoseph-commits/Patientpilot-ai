@@ -1,3 +1,5 @@
+// website/lib/workflows/conversation-workflow.ts
+
 import {
   continueConversation,
   getConversation,
@@ -69,20 +71,24 @@ export interface ConversationWorkflowResult {
  */
 export async function executeConversationWorkflow(
   callSid: string,
-  userMessage: string
+  userMessage: string,
 ): Promise<ConversationWorkflowResult> {
+
   /**
-   * Continue the AI conversation.
+   * Continue AI conversation.
+   *
+   * RC5:
+   * continueConversation() already returns
+   * a complete AICompletionResult.
    */
   const ai =
     await continueConversation(
       callSid,
-      userMessage
+      userMessage,
     );
 
   /**
-   * Reload latest session because
-   * continueConversation updates it.
+   * Reload latest session.
    */
   const session =
     getConversation(callSid);
@@ -100,13 +106,12 @@ export async function executeConversationWorkflow(
     | undefined;
 
   /**
-   * Create appointment if the AI
-   * has completed the conversation.
+   * Synchronize appointment.
    */
   const appointmentResult =
     await syncAppointment(
       session,
-      ai
+      ai,
     );
 
   if (
@@ -121,7 +126,7 @@ export async function executeConversationWorkflow(
      */
     const patientResult =
       await syncPatient(
-        appointment
+        appointment,
       );
 
     patient =
@@ -135,7 +140,7 @@ export async function executeConversationWorkflow(
         session,
         ai,
         appointment,
-        patient
+        patient,
       );
   }
 

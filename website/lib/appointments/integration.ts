@@ -18,23 +18,8 @@ import type {
  * ============================================================
  *
  * Bridges the AI engine and the Appointment module.
- *
- * Responsible for:
- * - Checking conversation completion
- * - Preventing duplicate appointment creation
- * - Creating appointments
- * ============================================================
  */
 
-/**
- * Tracks appointments already created
- * during the current server process.
- *
- * NOTE:
- * This is an in-memory implementation for the MVP.
- * Later this will be replaced with a database lookup
- * using the Call SID.
- */
 const processedCalls = new Set<string>();
 
 export interface AppointmentIntegrationResult {
@@ -45,14 +30,27 @@ export interface AppointmentIntegrationResult {
   reason?: string;
 }
 
-/**
- * Synchronize a completed AI conversation
- * into the Appointment module.
- */
 export async function syncAppointment(
   session: AIConversationSession,
-  result: AICompletionResult
+  result: AICompletionResult,
 ): Promise<AppointmentIntegrationResult> {
+
+  /**
+   * RC5 Migration
+   *
+   * Canonical identifier is callId.
+   * callSid is kept temporarily for compatibility.
+   */
+  const callId =
+    session.callSid ?? session.callId;
+
+  if (!callId) {
+    return {
+      created: false,
+      reason: "Missing call identifier.",
+    };
+  }
+
   /**
    * Conversation not complete.
    */
@@ -66,7 +64,7 @@ export async function syncAppointment(
   /**
    * Prevent duplicate creation.
    */
-  if (processedCalls.has(session.callSid)) {
+  if (processedCalls.has(callId)) {
     return {
       created: false,
       reason: "Appointment already created.",
@@ -79,23 +77,33 @@ export async function syncAppointment(
   if (!appointment) {
     return {
       created: false,
-      reason: "No appointment information available.",
+      reason:
+        "No appointment information available.",
     };
   }
 
   /**
-   * Ensure all required fields exist.
+   * Required fields.
    */
+  const appointmentDate =
+    appointment.appointmentDate ??
+    appointment.preferredDate;
+
+  const appointmentTime =
+    appointment.appointmentTime ??
+    appointment.preferredTime;
+
   if (
     !appointment.patientName ||
     !appointment.phoneNumber ||
-    !appointment.appointmentDate ||
-    !appointment.appointmentTime ||
+    !appointmentDate ||
+    !appointmentTime ||
     !appointment.reason
   ) {
     return {
       created: false,
-      reason: "Appointment data incomplete.",
+      reason:
+        "Appointment data incomplete.",
     };
   }
 
@@ -104,7 +112,8 @@ export async function syncAppointment(
    */
   const createdAppointment =
     await createAppointmentService({
-      clinicName: "PatientPilot Demo Clinic",
+      clinicName:
+        "PatientPilot Demo Clinic",
 
       patientName:
         appointment.patientName,
@@ -112,20 +121,17 @@ export async function syncAppointment(
       phoneNumber:
         appointment.phoneNumber,
 
-      appointmentDate:
-        appointment.appointmentDate,
+      appointmentDate,
 
-      appointmentTime:
-        appointment.appointmentTime,
+      appointmentTime,
 
       reason:
         appointment.reason,
 
-      callSid:
-        session.callSid,
+      callSid: callId,
     });
 
-  processedCalls.add(session.callSid);
+  processedCalls.add(callId);
 
   return {
     created: true,
@@ -138,18 +144,16 @@ export async function syncAppointment(
  * has already been synchronized.
  */
 export function isAppointmentSynced(
-  callSid: string
+  callId: string,
 ): boolean {
-  return processedCalls.has(callSid);
+  return processedCalls.has(callId);
 }
 
 /**
  * Clears synchronization state.
- *
- * Useful for testing.
  */
 export function clearAppointmentSync(
-  callSid: string
+  callId: string,
 ): void {
-  processedCalls.delete(callSid);
+  processedCalls.delete(callId);
 }

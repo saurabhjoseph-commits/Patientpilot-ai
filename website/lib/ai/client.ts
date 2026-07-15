@@ -1,12 +1,6 @@
+// website/lib/ai/client.ts
+
 import OpenAI from "openai";
-
-import { buildSystemPrompt } from "./prompts";
-
-import type {
-  AICompletionResult,
-  AIMessage,
-  GenerateResponseParams,
-} from "./types";
 
 /**
  * ============================================================
@@ -15,107 +9,42 @@ import type {
  * ============================================================
  */
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-const MODEL =
-  process.env.OPENAI_MODEL ?? "gpt-4.1-mini";
+export const DEFAULT_MODEL =
+  process.env.OPENAI_MODEL ??
+  "gpt-5.5";
 
 /**
- * Convert our message roles to OpenAI roles.
+ * Singleton OpenAI client.
  */
-function mapRole(
-  role: AIMessage["role"]
-): "system" | "user" | "assistant" {
-  switch (role) {
-    case "assistant":
-      return "assistant";
+let client: OpenAI | null = null;
 
-    case "user":
-      return "user";
-
-    default:
-      return "system";
+/**
+ * Returns the shared OpenAI client.
+ */
+export function getOpenAIClient(): OpenAI {
+  if (client) {
+    return client;
   }
+
+  const apiKey = process.env.OPENAI_API_KEY;
+
+  if (!apiKey) {
+    throw new Error(
+      "Missing OPENAI_API_KEY environment variable.",
+    );
+  }
+
+  client = new OpenAI({
+    apiKey,
+  });
+
+  return client;
 }
 
 /**
- * Generate the next AI response.
+ * Reset the cached client.
+ * Useful for testing.
  */
-export async function generateResponse(
-  request: GenerateResponseParams
-): Promise<AICompletionResult> {
-  const { session, userMessage } = request;
-
-  const systemPrompt = buildSystemPrompt(session);
-
-  const messages = [
-    {
-      role: "system" as const,
-      content: systemPrompt,
-    },
-
-    ...session.messages.map((message) => ({
-      role: mapRole(message.role),
-      content: message.content,
-    })),
-
-    {
-      role: "user" as const,
-      content: userMessage,
-    },
-  ];
-
-  const completion =
-    await openai.chat.completions.create({
-      model: MODEL,
-
-      temperature: 0.4,
-
-      messages,
-    });
-
-  const responseText =
-    completion.choices[0]?.message?.content?.trim() ??
-    "I'm sorry, I didn't quite catch that. Could you please repeat that?";
-    const state = session.state;
-
-const intent = session.intent;
-
-const appointment = session.appointment;
-
-const shouldHangup = false;
-
-  /**
-   * Future versions will use structured outputs to
-   * detect intent, state transitions and appointment
-   * extraction automatically.
-   */
-  return {
-  response: {
-    message: responseText,
-    state,
-    intent,
-    appointment,
-    shouldHangup,
-  },
-
-  analysis: {
-    nextState: state,
-    intent,
-    completed: state === "completed",
-    shouldHangup,
-    needsHuman:
-      intent === "human_agent" ||
-      intent === "emergency",
-    missingFields: [],
-  },
-
-  usage: {
-    inputTokens: completion.usage?.prompt_tokens ?? 0,
-    outputTokens: completion.usage?.completion_tokens ?? 0,
-    totalTokens: completion.usage?.total_tokens ?? 0,
-  },
-};
+export function resetOpenAIClient(): void {
+  client = null;
 }

@@ -1,17 +1,19 @@
-"use client";
+// website/components/admin/live/AIStatusBadge.tsx
 
+import clsx from "clsx";
 import {
-  Brain,
-  CheckCircle2,
-  Headphones,
-  Loader2,
-  Phone,
   PhoneCall,
-  UserRound,
+  User,
+  Phone,
+  ClipboardList,
+  Calendar,
+  CheckCircle2,
+  ArrowRightCircle,
   XCircle,
+  PauseCircle,
 } from "lucide-react";
 
-import type { AIConversationState } from "@/lib/ai/types";
+import type { AIConversationState } from "@/lib/ai/core";
 
 interface AIStatusBadgeProps {
   state: AIConversationState | "idle";
@@ -28,14 +30,14 @@ const STATUS_CONFIG: Record<
   idle: {
     label: "Idle",
     className:
-      "bg-slate-100 text-slate-700 border-slate-200",
-    icon: Phone,
+      "bg-gray-100 text-gray-700 border-gray-200",
+    icon: PauseCircle,
   },
 
   greeting: {
     label: "Greeting",
     className:
-      "bg-blue-100 text-blue-700 border-blue-200",
+      "bg-sky-100 text-sky-700 border-sky-200",
     icon: PhoneCall,
   },
 
@@ -43,35 +45,35 @@ const STATUS_CONFIG: Record<
     label: "Collecting Name",
     className:
       "bg-indigo-100 text-indigo-700 border-indigo-200",
-    icon: UserRound,
+    icon: User,
   },
 
   collecting_phone: {
     label: "Collecting Phone",
     className:
-      "bg-indigo-100 text-indigo-700 border-indigo-200",
-    icon: UserRound,
+      "bg-cyan-100 text-cyan-700 border-cyan-200",
+    icon: Phone,
   },
 
   collecting_reason: {
     label: "Collecting Reason",
     className:
-      "bg-yellow-100 text-yellow-700 border-yellow-200",
-    icon: Headphones,
+      "bg-amber-100 text-amber-700 border-amber-200",
+    icon: ClipboardList,
   },
 
   collecting_date: {
     label: "Collecting Date",
     className:
-      "bg-yellow-100 text-yellow-700 border-yellow-200",
-    icon: Headphones,
+      "bg-purple-100 text-purple-700 border-purple-200",
+    icon: Calendar,
   },
 
   confirming: {
     label: "Confirming",
     className:
-      "bg-purple-100 text-purple-700 border-purple-200",
-    icon: Brain,
+      "bg-orange-100 text-orange-700 border-orange-200",
+    icon: ArrowRightCircle,
   },
 
   completed: {
@@ -84,14 +86,14 @@ const STATUS_CONFIG: Record<
   handoff: {
     label: "Human Handoff",
     className:
-      "bg-orange-100 text-orange-700 border-orange-200",
-    icon: Loader2,
+      "bg-red-100 text-red-700 border-red-200",
+    icon: ArrowRightCircle,
   },
 
   ended: {
     label: "Ended",
     className:
-      "bg-red-100 text-red-700 border-red-200",
+      "bg-slate-100 text-slate-700 border-slate-200",
     icon: XCircle,
   },
 };
@@ -99,16 +101,20 @@ const STATUS_CONFIG: Record<
 export default function AIStatusBadge({
   state,
 }: AIStatusBadgeProps) {
-  const config = STATUS_CONFIG[state] ?? STATUS_CONFIG.idle;
+  const config =
+    STATUS_CONFIG[state] ??
+    STATUS_CONFIG.idle;
 
   const Icon = config.icon;
 
   return (
     <span
-      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${config.className}`}
+      className={clsx(
+        "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium",
+        config.className
+      )}
     >
-      <Icon className="h-4 w-4" />
-
+      <Icon className="h-3.5 w-3.5" />
       {config.label}
     </span>
   );

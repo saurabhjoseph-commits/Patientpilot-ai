@@ -1,124 +1,141 @@
+// website/lib/ai/analysis.ts
+
 import type {
   AIConversationSession,
   ConversationAnalysis,
-} from "./types";
+} from "./core";
 
 import {
   detectIntent,
-  determineNextState,
   getMissingAppointmentFields,
   needsHumanAgent,
-  shouldEndConversation,
-} from "./conversation";
+  calculateConfidence,
+} from "./conversation-utils";
+
+import {
+  evaluateState,
+} from "./state-machine";
 
 import {
   validateAppointment,
-} from "./validator";
+} from "./validators";
 
 /**
  * ============================================================
  * PatientPilot AI
- * Analysis Service
+ * Conversation Analysis Engine
+ * ============================================================
+ *
+ * Responsible for producing a single
+ * ConversationAnalysis object.
+ *
+ * No OpenAI calls.
+ * No session mutation.
+ * No persistence.
  * ============================================================
  */
 
 export function analyzeConversation(
   session: AIConversationSession,
-  latestMessage: string
+  latestMessage: string,
 ): ConversationAnalysis {
 
   const intent =
     detectIntent(latestMessage);
 
-  const nextState =
-    determineNextState(session);
+  const workflow =
+    evaluateState(session);
 
   const validation =
     validateAppointment(
-      session.appointment
+      session.appointment,
     );
 
   const missingFields =
     getMissingAppointmentFields(
-      session.appointment
+      session.appointment,
     );
 
   const needsHuman =
     needsHumanAgent(intent);
 
-  const completed =
-    validation.valid;
-
-  const shouldHangup =
-    shouldEndConversation(
-      nextState,
-      needsHuman
+  const confidence =
+    calculateConfidence(
+      missingFields,
     );
 
   return {
-    nextState,
 
     intent,
 
-    completed,
+    nextState:
+      workflow.nextState,
 
-    shouldHangup,
+    completed:
+      validation.valid,
+
+    shouldHangup:
+      workflow.completed ||
+      needsHuman,
 
     needsHuman,
 
+    confidence,
+
     missingFields,
 
-    confidence:
-      validation.score,
+    summary:
+      buildSummary(
+        session,
+        missingFields,
+      ),
   };
 }
 
 /**
- * ============================================================
- * Returns whether the AI has
- * enough information to finish.
- * ============================================================
+ * ------------------------------------------------------------
+ * Summary builder
+ * ------------------------------------------------------------
+ */
+
+function buildSummary(
+  session: AIConversationSession,
+  missingFields: string[],
+): string {
+
+  if (missingFields.length === 0) {
+    return "Appointment information complete.";
+  }
+
+  return `Waiting for ${missingFields.join(", ")}.`;
+}
+
+/**
+ * ------------------------------------------------------------
+ * Convenience helpers
+ * ------------------------------------------------------------
  */
 
 export function isConversationComplete(
-  analysis: ConversationAnalysis
+  analysis: ConversationAnalysis,
 ): boolean {
   return analysis.completed;
 }
 
-/**
- * ============================================================
- * Returns whether a human
- * should take over.
- * ============================================================
- */
-
 export function requiresHumanAgent(
-  analysis: ConversationAnalysis
+  analysis: ConversationAnalysis,
 ): boolean {
   return analysis.needsHuman;
 }
 
-/**
- * ============================================================
- * Returns remaining information.
- * ============================================================
- */
-
 export function getRemainingQuestions(
-  analysis: ConversationAnalysis
+  analysis: ConversationAnalysis,
 ): string[] {
   return analysis.missingFields;
 }
 
-/**
- * ============================================================
- * Confidence helper.
- * ============================================================
- */
-
 export function getConfidence(
-  analysis: ConversationAnalysis
+  analysis: ConversationAnalysis,
 ): number {
-  return analysis.confidence ?? 0;
+  return analysis.confidence;
 }

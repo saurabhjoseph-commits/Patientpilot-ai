@@ -1,6 +1,6 @@
 import type {
   AppointmentData,
-} from "./types";
+} from "./core";
 
 import {
   mergeAppointmentData,
@@ -8,11 +8,11 @@ import {
 
 import {
   validateAppointment,
-} from "./validator";
+} from "./validators";
 
 import {
   getMissingAppointmentFields,
-} from "./conversation";
+} from "./conversation-utils";
 
 /**
  * ============================================================

@@ -1,11 +1,13 @@
+// website/lib/ai/state-machine.ts
+
 import type {
   AIConversationSession,
   AIConversationState,
-} from "./types";
+} from "./core";
 
 import {
   getMissingAppointmentFields,
-} from "./conversation";
+} from "./conversation-utils";
 
 /**
  * ============================================================
@@ -23,11 +25,14 @@ export interface StateTransition {
 export interface StateMachineResult {
   currentState: AIConversationState;
   nextState: AIConversationState;
-  transition?: StateTransition;
   completed: boolean;
+  transition?: StateTransition;
 }
 
-const STATE_ORDER: AIConversationState[] = [
+/**
+ * Ordered workflow.
+ */
+const WORKFLOW: AIConversationState[] = [
   "greeting",
   "collecting_name",
   "collecting_phone",
@@ -37,140 +42,150 @@ const STATE_ORDER: AIConversationState[] = [
   "completed",
 ];
 
-function nextSequentialState(
-  state: AIConversationState
+/**
+ * Returns the next sequential workflow state.
+ */
+function getSequentialState(
+  state: AIConversationState,
 ): AIConversationState {
-  const index = STATE_ORDER.indexOf(state);
+  const index = WORKFLOW.indexOf(state);
 
   if (
-    index === -1 ||
-    index === STATE_ORDER.length - 1
+    index < 0 ||
+    index === WORKFLOW.length - 1
   ) {
     return state;
   }
 
-  return STATE_ORDER[index + 1];
+  return WORKFLOW[index + 1];
 }
 
 /**
- * Determine the next conversation state.
+ * Core state transition engine.
  */
 export function evaluateState(
-  session: AIConversationSession
+  session: AIConversationSession,
 ): StateMachineResult {
-  const currentState = session.state;
+  const current = session.state;
 
   const appointment = session.appointment;
 
-  let nextState: AIConversationState = currentState;
+  let next = current;
 
-  switch (currentState) {
+  switch (current) {
     case "idle":
-      nextState = "greeting";
+      next = "greeting";
       break;
 
     case "greeting":
-      nextState = "collecting_name";
+      next = "collecting_name";
       break;
 
     case "collecting_name":
       if (appointment.patientName) {
-        nextState = "collecting_phone";
+        next = "collecting_phone";
       }
       break;
 
     case "collecting_phone":
       if (appointment.phoneNumber) {
-        nextState = "collecting_reason";
+        next = "collecting_reason";
       }
       break;
 
     case "collecting_reason":
-      if (appointment.reason) {
-        nextState = "collecting_date";
+      if (
+        appointment.reason ||
+        appointment.procedure
+      ) {
+        next = "collecting_date";
       }
       break;
 
     case "collecting_date":
       if (
-        appointment.appointmentDate &&
-        appointment.appointmentTime
+        appointment.preferredDate &&
+        appointment.preferredTime
       ) {
-        nextState = "confirming";
+        next = "confirming";
       }
       break;
 
     case "confirming":
       if (
+        appointment.confirmed &&
         getMissingAppointmentFields(
-          appointment
+          appointment,
         ).length === 0
       ) {
-        nextState = "completed";
+        next = "completed";
       }
       break;
 
-    case "completed":
-      nextState = "ended";
+    case "handoff":
+      next = "ended";
       break;
 
-    case "handoff":
-      nextState = "ended";
+    case "completed":
+      next = "ended";
       break;
 
     case "ended":
-      nextState = "ended";
+      next = "ended";
       break;
   }
 
-  const completed =
-    nextState === "completed" ||
-    nextState === "ended";
-
   return {
-    currentState,
-    nextState,
-    completed,
+    currentState: current,
+
+    nextState: next,
+
+    completed:
+      next === "completed" ||
+      next === "ended",
+
     transition:
-      currentState === nextState
+      current === next
         ? undefined
         : {
-            from: currentState,
-            to: nextState,
-            reason: buildReason(
-              currentState,
-              nextState
-            ),
+            from: current,
+            to: next,
+            reason: `${current} → ${next}`,
           },
   };
 }
 
 /**
- * Returns true if the state
- * should move immediately.
+ * True if the workflow can move forward.
  */
 export function canAdvance(
-  session: AIConversationSession
+  session: AIConversationSession,
 ): boolean {
+  const result =
+    evaluateState(session);
+
   return (
-    evaluateState(session).currentState !==
-    evaluateState(session).nextState
+    result.currentState !==
+    result.nextState
   );
 }
 
 /**
- * Force a state transition.
+ * Force a transition.
  */
 export function forceState(
   session: AIConversationSession,
-  state: AIConversationState
+  state: AIConversationState,
 ): StateMachineResult {
   return {
     currentState: session.state,
+
     nextState: state,
+
     completed:
       state === "completed" ||
       state === "ended",
+
     transition: {
       from: session.state,
       to: state,
@@ -180,32 +195,29 @@ export function forceState(
 }
 
 /**
- * Returns remaining steps.
+ * Remaining workflow.
  */
 export function remainingStates(
-  session: AIConversationSession
+  session: AIConversationSession,
 ): AIConversationState[] {
-  const index = STATE_ORDER.indexOf(
-    session.state
-  );
+  const index =
+    WORKFLOW.indexOf(session.state);
 
   if (index < 0) {
     return [];
   }
 
-  return STATE_ORDER.slice(index + 1);
+  return WORKFLOW.slice(index + 1);
 }
 
 /**
- * Human-readable transition reason.
+ * Terminal workflow states.
  */
-function buildReason(
-  from: AIConversationState,
-  to: AIConversationState
-): string {
-  if (to === nextSequentialState(from)) {
-    return "Conversation progressed";
-  }
-
-  return `${from} → ${to}`;
+export function isTerminalState(
+  state: AIConversationState,
+): boolean {
+  return (
+    state === "completed" ||
+    state === "ended"
+  );
 }

@@ -1,215 +1,113 @@
+// website/lib/ai/conversation.ts
+
+import { generateAIResponse } from "./responses";
+import { validateAIResponse } from "./validators";
+import { processAppointment } from "./appointment";
+
 import type {
-  AIConversationSession,
-  AIConversationState,
-  AIIntent,
-  AppointmentData,
-  ConversationAnalysis,
+  AIResponse,
+  ConversationMessage,
+  ConversationRequest,
+  ConversationState,
 } from "./types";
 
 /**
  * ============================================================
  * PatientPilot AI
- * Conversation Utilities
+ * Conversation Orchestrator
  * ============================================================
  */
 
-const REQUIRED_APPOINTMENT_FIELDS: (keyof AppointmentData)[] = [
-  "patientName",
-  "phoneNumber",
-  "appointmentDate",
-  "appointmentTime",
-  "reason",
-];
+export interface ConversationResult {
+  response: AIResponse;
 
-/**
- * Returns appointment fields that still need to be collected.
- */
-export function getMissingAppointmentFields(
-  appointment: Partial<AppointmentData>
-): string[] {
-  return REQUIRED_APPOINTMENT_FIELDS.filter((field) => {
-    const value = appointment[field];
+  updatedState: ConversationState;
 
-    return (
-      value === undefined ||
-      value === null ||
-      String(value).trim() === ""
-    );
-  }).map(String);
+  appointment: ReturnType<typeof processAppointment>;
+
+  processingTimeMs: number;
 }
 
-/**
- * Returns true if all appointment fields exist.
- */
-export function isAppointmentComplete(
-  appointment: Partial<AppointmentData>
-): boolean {
-  return (
-    getMissingAppointmentFields(appointment)
-      .length === 0
-  );
-}
+function appendAssistantMessage(
+  state: ConversationState,
+  speech: string,
+): ConversationState {
+  const assistantMessage: ConversationMessage = {
+    id: crypto.randomUUID(),
 
-/**
- * Basic keyword intent detection.
- */
-export function detectIntent(
-  text: string
-): AIIntent {
-  const value = text.toLowerCase();
+    role: "assistant",
 
-  if (
-    value.includes("book") ||
-    value.includes("appointment")
-  ) {
-    return "book_appointment";
-  }
+    speaker: "assistant",
 
-  if (
-    value.includes("reschedule") ||
-    value.includes("change")
-  ) {
-    return "reschedule_appointment";
-  }
+    content: speech,
 
-  if (value.includes("cancel")) {
-    return "cancel_appointment";
-  }
-
-  if (value.includes("insurance")) {
-    return "insurance";
-  }
-
-  if (
-    value.includes("price") ||
-    value.includes("cost")
-  ) {
-    return "pricing";
-  }
-
-  if (
-    value.includes("hours") ||
-    value.includes("open")
-  ) {
-    return "office_hours";
-  }
-
-  if (
-    value.includes("pain") ||
-    value.includes("bleeding") ||
-    value.includes("emergency")
-  ) {
-    return "emergency";
-  }
-
-  if (
-    value.includes("human") ||
-    value.includes("person") ||
-    value.includes("staff")
-  ) {
-    return "human_agent";
-  }
-
-  return "unknown";
-}
-
-/**
- * Determine the next conversation state.
- */
-export function determineNextState(
-  session: AIConversationSession
-): AIConversationState {
-  const appointment = session.appointment;
-
-  if (!appointment.patientName) {
-    return "collecting_name";
-  }
-
-  if (!appointment.phoneNumber) {
-    return "collecting_phone";
-  }
-
-  if (!appointment.reason) {
-    return "collecting_reason";
-  }
-
-  if (!appointment.appointmentDate) {
-    return "collecting_date";
-  }
-
-  if (!appointment.appointmentTime) {
-    return "confirming";
-  }
-
-  return "completed";
-}
-
-/**
- * Returns true if a human should take over.
- */
-export function needsHumanAgent(
-  intent: AIIntent
-): boolean {
-  return (
-    intent === "emergency" ||
-    intent === "human_agent"
-  );
-}
-
-/**
- * Determines if the call should end.
- */
-export function shouldEndConversation(
-  state: AIConversationState,
-  needsHuman: boolean
-): boolean {
-  if (needsHuman) {
-    return true;
-  }
-
-  return (
-    state === "completed" ||
-    state === "ended"
-  );
-}
-
-/**
- * Full conversation analysis.
- */
-export function analyzeConversation(
-  session: AIConversationSession,
-  latestMessage: string
-): ConversationAnalysis {
-  const intent = detectIntent(latestMessage);
-
-  const nextState =
-    determineNextState(session);
-
-  const missingFields =
-    getMissingAppointmentFields(
-      session.appointment
-    );
-
-  const completed =
-    nextState === "completed";
-
-  const human =
-    needsHumanAgent(intent);
+    timestamp: new Date().toISOString(),
+  };
 
   return {
-    nextState,
-    intent,
-    completed,
-    shouldHangup:
-      shouldEndConversation(
-        nextState,
-        human
-      ),
-    needsHuman: human,
-    missingFields,
-    confidence: Math.max(
-      0,
-      100 - missingFields.length * 20
-    ),
+    ...state,
+
+    messages: [
+      ...state.messages,
+      assistantMessage,
+    ],
+
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+/**
+ * Executes one conversation turn.
+ */
+export async function continueConversation(
+  request: ConversationRequest,
+): Promise<ConversationResult> {
+  const started = Date.now();
+
+  /**
+   * generateAIResponse() now returns
+   * a fully parsed AIResponse.
+   */
+  const parsedResponse =
+    await generateAIResponse(request);
+
+  const validation =
+    validateAIResponse(parsedResponse);
+
+  if (!validation.valid) {
+    throw new Error(
+      [
+        "Invalid AI response:",
+        ...validation.errors,
+      ].join("\n"),
+    );
+  }
+
+  const appointment =
+    processAppointment(parsedResponse);
+
+  const updatedState =
+    appendAssistantMessage(
+      request.state,
+      parsedResponse.speech,
+    );
+
+  const response: AIResponse = {
+    ...parsedResponse,
+
+    actions: appointment.actions,
+
+    state: updatedState,
+  };
+
+  return {
+    response,
+
+    updatedState,
+
+    appointment,
+
+    processingTimeMs:
+      Date.now() - started,
   };
 }

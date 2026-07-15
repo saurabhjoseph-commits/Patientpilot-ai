@@ -1,94 +1,191 @@
+// website/lib/ai/schema.ts
+
 /**
  * ============================================================
  * PatientPilot AI
- * Structured AI Response Schema
- * ============================================================
- *
- * Defines ONLY the structured response returned by OpenAI.
- *
- * All shared application types come from types.ts.
+ * Structured Response Schema
+ * Compatible with OpenAI SDK 6.x Responses API
  * ============================================================
  */
 
-import type {
-  AIConversationState,
-  AIIntent,
-  AppointmentData,
-} from "./types";
+export const conversationResponseSchema = {
+  name: "patientpilot_conversation",
 
-/**
- * Structured JSON returned by OpenAI.
- */
-export interface AIStructuredResponse {
-  /**
-   * Natural language reply spoken
-   * back to the caller.
-   */
-  message: string;
+  schema: {
+    type: "object",
 
-  /**
-   * Current conversation state.
-   */
-  state: AIConversationState;
+    additionalProperties: false,
 
-  /**
-   * Detected caller intent.
-   */
-  intent: AIIntent;
+    properties: {
+      message: {
+        type: "string",
+      },
 
-  /**
-   * Confidence (0-100)
-   */
-  confidence: number;
+      speech: {
+        type: "string",
+      },
 
-  /**
-   * End the conversation.
-   */
-  shouldHangup: boolean;
+      intent: {
+        type: "string",
 
-  /**
-   * Extracted appointment.
-   *
-   * Null until enough
-   * information has been collected.
-   */
-  appointment: AppointmentData | null;
-}
+        enum: [
+          "unknown",
+          "greeting",
+          "new_patient",
+          "existing_patient",
+          "book_appointment",
+          "reschedule_appointment",
+          "cancel_appointment",
+          "pricing",
+          "insurance",
+          "office_hours",
+          "billing",
+          "general_question",
+          "emergency",
+          "human_agent",
+          "goodbye",
+        ],
+      },
 
-/**
- * Returns true when
- * the AI has enough information
- * to create an appointment.
- */
-export function isConversationComplete(
-  response: AIStructuredResponse
-): boolean {
-  return (
-    response.state === "completed" &&
-    response.appointment !== null &&
-    !!response.appointment.patientName &&
-    !!response.appointment.phoneNumber &&
-    !!response.appointment.appointmentDate &&
-    !!response.appointment.appointmentTime &&
-    !!response.appointment.reason
-  );
-}
+      confidence: {
+        type: "number",
+      },
 
-/**
- * Safe fallback.
- */
-export const EmptyStructuredResponse: AIStructuredResponse =
-  {
-    message:
-      "I'm sorry, could you please repeat that?",
+      shouldHangup: {
+        type: "boolean",
+      },
 
-    state: "greeting",
+      actions: {
+        type: "array",
 
-    intent: "general_question",
+        items: {
+          type: "string",
 
-    confidence: 0,
+          enum: [
+            "NONE",
+            "BOOK_APPOINTMENT",
+            "RESCHEDULE_APPOINTMENT",
+            "CANCEL_APPOINTMENT",
+            "SEND_SMS_CONFIRMATION",
+            "SEND_EMAIL_CONFIRMATION",
+            "TRANSFER_TO_HUMAN",
+            "END_CALL",
+          ],
+        },
+      },
 
-    shouldHangup: false,
+      analysis: {
+        type: "object",
 
-    appointment: null,
-  };
+        additionalProperties: false,
+
+        properties: {
+          intent: {
+            type: "string",
+          },
+
+          nextState: {
+            type: "string",
+          },
+
+          completed: {
+            type: "boolean",
+          },
+
+          shouldHangup: {
+            type: "boolean",
+          },
+
+          needsHuman: {
+            type: "boolean",
+          },
+
+          confidence: {
+            type: "number",
+          },
+
+          missingFields: {
+            type: "array",
+
+            items: {
+              type: "string",
+            },
+          },
+
+          summary: {
+            type: "string",
+          },
+        },
+
+        required: [
+          "intent",
+          "nextState",
+          "completed",
+          "shouldHangup",
+          "needsHuman",
+          "confidence",
+          "missingFields",
+          "summary",
+        ],
+      },
+
+      appointment: {
+        type: "object",
+
+        additionalProperties: false,
+
+        properties: {
+          patientName: {
+            type: "string",
+          },
+
+          phoneNumber: {
+            type: "string",
+          },
+
+          email: {
+            type: "string",
+          },
+
+          procedure: {
+            type: "string",
+          },
+
+          reason: {
+            type: "string",
+          },
+
+          dentist: {
+            type: "string",
+          },
+
+          insurance: {
+            type: "string",
+          },
+
+          preferredDate: {
+            type: "string",
+          },
+
+          preferredTime: {
+            type: "string",
+          },
+
+          confirmed: {
+            type: "boolean",
+          },
+        },
+      },
+    },
+
+    required: [
+      "message",
+      "speech",
+      "intent",
+      "confidence",
+      "analysis",
+      "actions",
+      "shouldHangup",
+    ],
+  },
+} as const;

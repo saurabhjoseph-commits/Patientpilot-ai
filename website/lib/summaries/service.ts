@@ -45,12 +45,26 @@ export async function createSummaryService(
   session: AIConversationSession,
   result: AICompletionResult,
   appointment?: Appointment,
-  patient?: Patient
+  patient?: Patient,
 ): Promise<CallSummary> {
-  const existing =
-    await getSummaryByCallSid(
-      session.callSid
+
+  /**
+   * RC5 Migration
+   *
+   * callId is now canonical.
+   * callSid is retained temporarily for compatibility.
+   */
+  const callId =
+    session.callSid ?? session.callId;
+
+  if (!callId) {
+    throw new Error(
+      "Missing conversation call identifier.",
     );
+  }
+
+  const existing =
+    await getSummaryByCallSid(callId);
 
   if (existing) {
     return existing;
@@ -61,7 +75,7 @@ export async function createSummaryService(
       session,
       result,
       appointment,
-      patient
+      patient,
     );
 
   return createSummary(summary);
@@ -71,7 +85,7 @@ export async function createSummaryService(
  * Get summary.
  */
 export async function getSummaryService(
-  id: string
+  id: string,
 ): Promise<CallSummary | null> {
   return getSummary(id);
 }
@@ -80,7 +94,7 @@ export async function getSummaryService(
  * Find summary by Call SID.
  */
 export async function getSummaryByCallSidService(
-  callSid: string
+  callSid: string,
 ): Promise<CallSummary | null> {
   return getSummaryByCallSid(callSid);
 }
@@ -89,7 +103,7 @@ export async function getSummaryByCallSidService(
  * List summaries.
  */
 export async function listSummariesService(
-  filters?: SummaryFilters
+  filters?: SummaryFilters,
 ): Promise<CallSummary[]> {
   return listSummaries(filters);
 }
@@ -99,7 +113,7 @@ export async function listSummariesService(
  */
 export async function updateSummaryService(
   id: string,
-  input: UpdateSummaryInput
+  input: UpdateSummaryInput,
 ): Promise<CallSummary> {
   return updateSummary(id, input);
 }
@@ -108,7 +122,7 @@ export async function updateSummaryService(
  * Delete summary.
  */
 export async function deleteSummaryService(
-  id: string
+  id: string,
 ): Promise<void> {
   return deleteSummary(id);
 }

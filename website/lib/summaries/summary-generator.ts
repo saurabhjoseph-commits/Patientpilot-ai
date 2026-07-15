@@ -21,26 +21,36 @@ import type {
  * PatientPilot AI
  * Summary Generator
  * ============================================================
- *
- * Generates a structured call summary from
- * an AI conversation.
- * ============================================================
  */
 
-/**
- * Build a call summary.
- */
 export function generateSummary(
   session: AIConversationSession,
   result: AICompletionResult,
   appointment?: Appointment,
-  patient?: Patient
+  patient?: Patient,
 ): CreateSummaryInput {
+
+  /**
+   * RC5 Migration
+   */
+  const callId =
+    session.callSid ?? session.callId;
+
   const appointmentData =
     result.response.appointment;
 
+  const appointmentDate =
+    appointment?.appointmentDate ??
+    appointmentData?.appointmentDate ??
+    appointmentData?.preferredDate;
+
+  const appointmentTime =
+    appointment?.appointmentTime ??
+    appointmentData?.appointmentTime ??
+    appointmentData?.preferredTime;
+
   return {
-    callSid: session.callSid,
+    callSid: callId,
 
     clinicName:
       appointment?.clinicName ??
@@ -62,19 +72,21 @@ export function generateSummary(
     outcome:
       determineOutcome(
         result,
-        appointment
+        appointment,
       ),
 
     summary:
       buildSummary(
         result,
-        appointment
+        appointment,
+        appointmentDate,
+        appointmentTime,
       ),
 
     actionItems:
       buildActionItems(
         result,
-        appointment
+        appointment,
       ),
 
     appointmentId:
@@ -83,8 +95,11 @@ export function generateSummary(
     patientId:
       patient?.id,
 
+    /**
+     * RC5 uses 0–1 confidence.
+     */
     confidence:
-      result.analysis.confidence ?? 100,
+      result.analysis.confidence ?? 1,
   };
 }
 
@@ -93,8 +108,9 @@ export function generateSummary(
  */
 function determineOutcome(
   result: AICompletionResult,
-  appointment?: Appointment
+  appointment?: Appointment,
 ): SummaryOutcome {
+
   if (appointment) {
     return "appointment_created";
   }
@@ -111,17 +127,20 @@ function determineOutcome(
 }
 
 /**
- * Build summary text.
+ * Build summary.
  */
 function buildSummary(
   result: AICompletionResult,
-  appointment?: Appointment
+  appointment: Appointment | undefined,
+  appointmentDate?: string,
+  appointmentTime?: string,
 ): string {
+
   if (appointment) {
     return [
       `Appointment created for ${appointment.patientName}.`,
       `Reason: ${appointment.reason}.`,
-      `Requested: ${appointment.appointmentDate} at ${appointment.appointmentTime}.`,
+      `Requested: ${appointmentDate ?? "Unknown"} at ${appointmentTime ?? "Unknown"}.`,
     ].join(" ");
   }
 
@@ -141,44 +160,43 @@ function buildSummary(
  */
 function buildActionItems(
   result: AICompletionResult,
-  appointment?: Appointment
+  appointment?: Appointment,
 ): string[] {
+
   const actions: string[] = [];
 
   if (appointment) {
     actions.push(
-      "Confirm appointment with patient."
+      "Confirm appointment with patient.",
     );
 
     actions.push(
-      "Send confirmation SMS."
+      "Send confirmation SMS.",
     );
 
     actions.push(
-      "Send confirmation email."
+      "Send confirmation email.",
     );
   }
 
   if (result.analysis.needsHuman) {
     actions.push(
-      "Receptionist should call patient."
+      "Receptionist should call patient.",
     );
   }
 
   if (
     !result.analysis.completed &&
-    result.analysis.missingFields.length
+    result.analysis.missingFields.length > 0
   ) {
     actions.push(
-      `Collect: ${result.analysis.missingFields.join(
-        ", "
-      )}`
+      `Collect: ${result.analysis.missingFields.join(", ")}`,
     );
   }
 
   if (actions.length === 0) {
     actions.push(
-      "No further action required."
+      "No further action required.",
     );
   }
 
