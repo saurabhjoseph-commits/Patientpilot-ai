@@ -1,7 +1,7 @@
 # PatientPilot AI Architecture
 
 **Document:** ARCHITECTURE.md  
-**Version:** 1.0.0  
+**Version:** 1.1.0  
 **Status:** Production  
 **Owner:** Engineering  
 **Last Updated:** July 2026
@@ -834,3 +834,273 @@ Every feature must be:
 We are building a scalable SaaS platform.
 
 Every engineering decision should make PatientPilot AI easier to maintain, extend, and operate as the product grows.
+
+---
+
+# Application Architecture
+
+While the previous sections define the platform architecture, this section defines how business modules are engineered within PatientPilot AI.
+
+## Layered Architecture
+
+```
+Browser
+    │
+    ▼
+Next.js Page
+    │
+    ▼
+API Route
+    │
+    ▼
+Service
+    │
+    ▼
+Repository
+    │
+    ▼
+Supabase
+```
+
+Every production feature should follow this layered architecture.
+
+---
+
+## Layer Responsibilities
+
+### UI
+
+Responsible for:
+
+- Rendering
+- User interaction
+- Displaying application state
+
+UI components must never contain business logic.
+
+---
+
+### API Routes
+
+Responsible for:
+
+- Parsing HTTP requests
+- Authentication
+- Authorization
+- Calling application services
+- Returning standardized HTTP responses
+
+API routes must never communicate directly with the database.
+
+---
+
+### Services
+
+Services contain business logic.
+
+Responsibilities include:
+
+- Validation
+- Business rules
+- Workflow orchestration
+- Cross-module coordination
+- Future integrations (email, AI, notifications)
+
+Services must never return HTTP responses.
+
+---
+
+### Repositories
+
+Repositories are responsible only for persistence.
+
+Responsibilities include:
+
+- CRUD operations
+- Queries
+- Transactions
+- Database communication
+
+Repositories must never contain business rules.
+
+---
+
+### Mappers
+
+Mappers translate between:
+
+- Database rows
+- Domain models
+- DTOs
+
+Business logic should never exist inside mappers.
+
+---
+
+## Business Module Standard
+
+Every new business module should follow this structure whenever applicable.
+
+```
+lib/<module>/
+
+types.ts
+constants.ts
+validation.ts
+mapper.ts
+repository.ts
+supabase-repository.ts
+service.ts
+index.ts
+```
+
+Examples:
+
+```
+lib/leads/
+lib/appointments/
+lib/patients/
+lib/clinic/
+```
+
+---
+
+## Dependency Rules
+
+Allowed
+
+```
+Route
+ ↓
+Service
+ ↓
+Repository
+```
+
+Not Allowed
+
+```
+Route
+ ↓
+Supabase
+```
+
+Not Allowed
+
+```
+Service
+ ↓
+NextResponse
+```
+
+Not Allowed
+
+```
+Repository
+ ↓
+Business Logic
+```
+
+---
+
+# Migration Standards
+
+PatientPilot AI is migrating incrementally to the layered architecture.
+
+Every migration should follow the same sequence.
+
+## Migration Workflow
+
+1. Define types
+2. Create constants
+3. Create validation
+4. Create mapper
+5. Create repository
+6. Create service
+7. Migrate API route
+8. Build successfully
+9. Perform QA
+10. Commit changes
+
+No large "big bang" refactors should be performed.
+
+Production stability always has priority.
+
+---
+
+## Build Policy
+
+Every milestone must:
+
+- Compile successfully
+- Pass TypeScript
+- Preserve existing functionality
+- Avoid unnecessary breaking changes
+
+Build after every completed milestone.
+
+---
+
+## Code Review Checklist
+
+Before merging:
+
+- No duplicated business logic
+- No direct Supabase access inside API routes
+- Validation handled by services
+- Repository contains persistence only
+- Mapper handles translations only
+- API responses remain consistent
+- Files remain modular and focused
+
+---
+
+# Multi-Tenant Principles
+
+PatientPilot AI is designed as a multi-tenant SaaS platform.
+
+Every engineering decision should support future onboarding of multiple clinics without requiring custom code.
+
+## Tenant Isolation
+
+Business entities should be designed to support:
+
+```
+clinic_id
+```
+
+Repositories should never assume a single clinic deployment.
+
+---
+
+## Domain Independence
+
+Domain models should remain independent of Supabase implementation details.
+
+Business logic should work regardless of the persistence provider.
+
+---
+
+## Configurability
+
+Platform behavior should be configurable through data and administration rather than code changes whenever practical.
+
+---
+
+## Scalability
+
+Features should be designed to support:
+
+- Multiple clinics
+- Multiple countries
+- Localization
+- Country-specific integrations
+- Future feature flags
+
+without requiring architectural redesign.
+
+---
+
+## Engineering Goal
+
+Every new feature should move PatientPilot AI closer to becoming a scalable AI Front Office Operating System while maintaining a clean, modular, and maintainable codebase.

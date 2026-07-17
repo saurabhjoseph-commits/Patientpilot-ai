@@ -1,6 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabase-server";
-import { logLeadActivity } from "@/lib/activity";
+import { NextRequest } from "next/server";
+
+import {
+  apiHandler,
+  success,
+} from "@/lib/core/api";
+
+import { leadService } from "@/lib/leads/service";
 
 interface RouteContext {
   params: Promise<{
@@ -9,114 +14,44 @@ interface RouteContext {
 }
 
 /**
- * Update Lead Status
+ * PATCH /api/leads/:id
+ * Update lead status.
  */
-export async function PATCH(
-  request: NextRequest,
-  { params }: RouteContext
-) {
-  try {
+export const PATCH = apiHandler(
+  async (
+    request: NextRequest,
+    { params }: RouteContext
+  ) => {
     const { id } = await params;
-
     const { status } = await request.json();
 
-    if (!status) {
-      return NextResponse.json(
-        {
-          error: "Status is required.",
-        },
-        {
-          status: 400,
-        }
-      );
-    }
-
-    const { data, error } = await supabaseServer
-      .from("contacts")
-      .update({
-        status,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", id)
-      .select()
-      .single();
-
-    if (error) {
-      return NextResponse.json(
-        {
-          error: error.message,
-        },
-        {
-          status: 400,
-        }
-      );
-    }
-
-    // Log activity
-    await logLeadActivity({
-      leadId: Number(id),
-      type: "Status",
-      description: `Status changed to "${status}"`,
-    });
-
-    return NextResponse.json({
-      success: true,
-      lead: data,
-    });
-  } catch (error) {
-    console.error(error);
-
-    return NextResponse.json(
-      {
-        error: "Failed to update lead.",
-      },
-      {
-        status: 500,
-      }
+    const lead = await leadService.updateStatus(
+      Number(id),
+      status
     );
+
+    return success({
+      lead,
+    });
   }
-}
+);
 
 /**
- * Delete Lead
+ * DELETE /api/leads/:id
+ * Delete a lead.
  */
-export async function DELETE(
-  request: NextRequest,
-  { params }: RouteContext
-) {
-  try {
+export const DELETE = apiHandler(
+  async (
+    _request: NextRequest,
+    { params }: RouteContext
+  ) => {
     const { id } = await params;
 
-    const { error } = await supabaseServer
-      .from("contacts")
-      .delete()
-      .eq("id", id);
+    await leadService.delete(Number(id));
 
-    if (error) {
-      return NextResponse.json(
-        {
-          error: error.message,
-        },
-        {
-          status: 400,
-        }
-      );
-    }
-
-    return NextResponse.json({
-      success: true,
-      message: "Lead deleted successfully.",
-    });
-  } catch (error) {
-    console.error(error);
-
-    return NextResponse.json(
-      {
-        error: "Failed to delete lead.",
-      },
-      {
-        status: 500,
-      }
+    return success(
+      null,
+      "Lead deleted successfully."
     );
   }
-}
+);

@@ -1,97 +1,13 @@
-import { NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabase-server";
+import { apiHandler, created } from "@/lib/core/api";
+import { leadService } from "@/lib/leads/service";
 
-export async function POST(request: Request) {
-  console.log("====================================");
-  console.log("BOOK DEMO API CALLED");
-  console.log("====================================");
+export const POST = apiHandler(async (request) => {
+  const body = await request.json();
 
-  try {
-    const body = await request.json();
+  const lead = await leadService.bookDemo(body);
 
-    console.log("Request Body:", body);
-
-    const {
-      clinicName,
-      dentistName,
-      email,
-      phone,
-      monthlyCalls,
-      message,
-    } = body;
-
-    if (
-      !clinicName ||
-      !dentistName ||
-      !email ||
-      !phone ||
-      !monthlyCalls
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Please fill in all required fields.",
-        },
-        {
-          status: 400,
-        }
-      );
-    }
-
-    console.log("Validation Passed");
-    console.log("Attempting to insert into Supabase...");
-
-    const { data, error } = await supabaseServer
-      .from("contacts")
-      .insert([
-        {
-          clinic_name: clinicName,
-          dentist_name: dentistName,
-          email,
-          phone,
-          monthly_calls: Number(monthlyCalls),
-          message,
-          status: "New",
-        },
-      ])
-      .select();
-
-    console.log("Supabase Response:", data);
-    console.log("Supabase Error:", error);
-
-    if (error) {
-      console.error("SUPABASE ERROR:", error);
-
-      return NextResponse.json(
-        {
-          success: false,
-          message: error.message,
-          details: error,
-        },
-        {
-          status: 500,
-        }
-      );
-    }
-
-    console.log("Lead Saved Successfully!");
-
-    return NextResponse.json({
-      success: true,
-      message: "Demo booked successfully!",
-    });
-
-  } catch (error) {
-    console.error("Server Error:", error);
-
-    return NextResponse.json(
-      {
-        success: false,
-        message: "Internal Server Error",
-      },
-      {
-        status: 500,
-      }
-    );
-  }
-}
+  return created(
+    lead,
+    "Demo booked successfully!"
+  );
+});

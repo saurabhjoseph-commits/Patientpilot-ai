@@ -3,112 +3,69 @@
 import {
   createSession,
   getSession,
-  addMessage,
 } from "./session";
 
+import { runWorkflow } from "./workflow";
+
 import type {
-  AIAction,
-  AICompletionResult,
+  AIContext,
   AIConversationSession,
+  AIIntent,
   AIMessage,
   AIResponse,
-  ConversationAnalysis,
 } from "./types";
 
 /**
  * ============================================================
  * PatientPilot AI
- * Temporary Compatibility Layer
+ * AI Service (RC4 Compatibility Layer)
  * ============================================================
- *
- * Keeps legacy callers working until the RC5 execution
- * engine replaces this implementation.
  */
 
+export interface ConversationRequest {
+  callId: string;
+  context: AIContext;
+  message: AIMessage;
+  intent: AIIntent;
+}
+
+/**
+ * Legacy API.
+ * Called when a new phone call starts.
+ */
 export function startConversation(
-  callSid: string,
+  callId: string,
 ): AIConversationSession {
-  return createSession(callSid);
+  return createSession(callId);
 }
 
+/**
+ * Legacy API.
+ */
 export function getConversation(
-  callSid: string,
+  callId: string,
 ): AIConversationSession {
-  return getSession(callSid);
+  return getSession(callId);
 }
 
+/**
+ * Main AI conversation entry point.
+ */
 export async function continueConversation(
-  callSid: string,
-  userMessage: string,
-): Promise<AICompletionResult> {
+  request: ConversationRequest,
+): Promise<AIResponse> {
+  if (!request.callId) {
+    throw new Error("Missing callId.");
+  }
 
-  const message: AIMessage = {
-    id: crypto.randomUUID(),
+  if (!request.message) {
+    throw new Error("Missing conversation message.");
+  }
 
-    role: "user",
-
-    speaker: "patient",
-
-    content: userMessage,
-
-    timestamp: new Date().toISOString(),
-  };
-
-  addMessage(
-    callSid,
-    message,
-  );
-
-  const session =
-    getSession(callSid);
-
-  const analysis: ConversationAnalysis = {
-    intent: "unknown",
-
-    nextState: "greeting",
-
-    completed: false,
-
-    shouldHangup: false,
-
-    needsHuman: false,
-
-    confidence: 1,
-
-    missingFields: [],
-
-    summary: "",
-  };
-
-  const response: AIResponse = {
-    message:
-      "Thank you. PatientPilot AI received your message.",
-
-    speech:
-      "Thank you. PatientPilot AI received your message.",
-
-    intent:
-      analysis.intent,
-
-    confidence:
-      analysis.confidence,
-
-    analysis,
-
-    appointment: undefined,
-
-    actions: [],
-
-    shouldHangup: false,
-
-    state: session,
-  };
-
-  return {
-    response,
-
-    analysis,
-
-    actions: [] satisfies AIAction[],
-  };
+  return runWorkflow({
+    callId: request.callId,
+    context: request.context,
+    message: request.message,
+    intent: request.intent,
+  });
 }

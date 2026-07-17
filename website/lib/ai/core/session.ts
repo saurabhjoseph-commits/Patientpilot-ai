@@ -28,15 +28,7 @@ export interface AIConversationSession {
   callId: string;
 
   /**
-   * ----------------------------------------------------------------
    * Temporary RC4 compatibility.
-   *
-   * Older parts of the application still reference `callSid`
-   * while the new domain model uses `callId`.
-   *
-   * Both point to the same value during the migration.
-   * Remove `callSid` after RC4 is complete.
-   * ----------------------------------------------------------------
    */
   callSid?: string;
 
@@ -56,19 +48,53 @@ export interface AIConversationSession {
   messages: AIMessage[];
 
   /**
-   * Patient information.
+   * Patient information collected so far.
    */
   patient: PatientData;
 
   /**
-   * Appointment information.
+   * Appointment information collected so far.
    */
   appointment: AppointmentData;
 
   /**
-   * Latest conversation analysis.
+   * Latest AI analysis.
    */
   analysis?: ConversationAnalysis;
+
+  /**
+   * Fields still required before the conversation
+   * can complete successfully.
+   */
+  missingFields: string[];
+
+  /**
+   * Current step in the conversation.
+   *
+   * Examples:
+   * greeting
+   * collect-name
+   * collect-phone
+   * collect-date
+   * confirm
+   * complete
+   */
+  currentStep: string;
+
+  /**
+   * AI confidence (0–1).
+   */
+  confidence: number;
+
+  /**
+   * Conversation completed successfully.
+   */
+  completed: boolean;
+
+  /**
+   * AI determined that a human should take over.
+   */
+  needsHuman: boolean;
 
   createdAt: string;
 

@@ -20,6 +20,8 @@ import {
 import type {
   AICompletionResult,
   AIConversationSession,
+  AIContext,
+  AIMessage,
 } from "@/lib/ai/types";
 
 import type {
@@ -39,19 +41,6 @@ import type {
  * PatientPilot AI
  * Conversation Workflow
  * ============================================================
- *
- * Orchestrates the complete business workflow:
- *
- * Twilio
- *   ↓
- * AI
- *   ↓
- * Appointment
- *   ↓
- * Patient
- *   ↓
- * Summary
- * ============================================================
  */
 
 export interface ConversationWorkflowResult {
@@ -66,6 +55,19 @@ export interface ConversationWorkflowResult {
   summary?: CallSummary;
 }
 
+const DEFAULT_CONTEXT: AIContext = {
+  clinicName: "Bright Smile Dental",
+  timezone: "America/New_York",
+  officeHours: "Mon-Fri 8:00 AM - 5:00 PM",
+  providers: ["Dr. Smith"],
+  acceptedInsurance: ["Delta Dental"],
+  appointmentTypes: [
+    "Cleaning",
+    "Emergency",
+    "Consultation",
+  ],
+};
+
 /**
  * Execute a complete conversation workflow.
  */
@@ -74,18 +76,26 @@ export async function executeConversationWorkflow(
   userMessage: string,
 ): Promise<ConversationWorkflowResult> {
 
-  /**
-   * Continue AI conversation.
-   *
-   * RC5:
-   * continueConversation() already returns
-   * a complete AICompletionResult.
-   */
-  const ai =
-    await continueConversation(
-      callSid,
-      userMessage,
-    );
+  const message: AIMessage = {
+    id: crypto.randomUUID(),
+    role: "user",
+    speaker: "patient",
+    content: userMessage,
+    timestamp: new Date().toISOString(),
+  };
+
+  const aiResponse = await continueConversation({
+  callId: callSid,
+  context: DEFAULT_CONTEXT,
+  message,
+  intent: "unknown",
+});
+
+const ai: AICompletionResult = {
+  response: aiResponse,
+  analysis: aiResponse.analysis,
+  actions: aiResponse.actions,
+};
 
   /**
    * Reload latest session.
@@ -93,17 +103,9 @@ export async function executeConversationWorkflow(
   const session =
     getConversation(callSid);
 
-  let appointment:
-    | Appointment
-    | undefined;
-
-  let patient:
-    | Patient
-    | undefined;
-
-  let summary:
-    | CallSummary
-    | undefined;
+  let appointment: Appointment | undefined;
+  let patient: Patient | undefined;
+  let summary: CallSummary | undefined;
 
   /**
    * Synchronize appointment.

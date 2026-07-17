@@ -16,6 +16,9 @@ function now(): string {
   return new Date().toISOString();
 }
 
+/**
+ * Creates a new conversation session.
+ */
 export function createSession(
   callId: string,
 ): AIConversationSession {
@@ -30,10 +33,21 @@ export function createSession(
 
     callId,
 
+    /**
+     * RC4 Compatibility
+     */
+    callSid: callId,
+
+    /**
+     * Conversation State
+     */
     state: "greeting",
 
     intent: "unknown",
 
+    /**
+     * Conversation Data
+     */
     patient: {},
 
     appointment: {
@@ -41,6 +55,21 @@ export function createSession(
     },
 
     messages: [],
+
+    analysis: undefined,
+
+    /**
+     * Sprint C1
+     */
+    missingFields: [],
+
+    currentStep: "greeting",
+
+    confidence: 1,
+
+    completed: false,
+
+    needsHuman: false,
 
     createdAt: now(),
 
@@ -52,6 +81,10 @@ export function createSession(
   return session;
 }
 
+/**
+ * Returns an existing session
+ * or creates a new one.
+ */
 export function getSession(
   callId: string,
 ): AIConversationSession {
@@ -61,6 +94,9 @@ export function getSession(
   );
 }
 
+/**
+ * Persists session changes.
+ */
 export function saveSession(
   session: AIConversationSession,
 ): void {
@@ -72,12 +108,18 @@ export function saveSession(
   );
 }
 
+/**
+ * Removes a session.
+ */
 export function deleteSession(
   callId: string,
 ): boolean {
   return sessions.delete(callId);
 }
 
+/**
+ * Adds a conversation message.
+ */
 export function addMessage(
   callId: string,
   message: AIMessage,
@@ -90,6 +132,9 @@ export function addMessage(
   saveSession(session);
 }
 
+/**
+ * Updates patient information.
+ */
 export function updatePatient(
   callId: string,
   patient: Partial<PatientData>,
@@ -105,6 +150,9 @@ export function updatePatient(
   saveSession(session);
 }
 
+/**
+ * Updates appointment information.
+ */
 export function updateAppointment(
   callId: string,
   appointment: Partial<AppointmentData>,
@@ -120,6 +168,9 @@ export function updateAppointment(
   saveSession(session);
 }
 
+/**
+ * Updates workflow state.
+ */
 export function updateState(
   callId: string,
   state: AIConversationState,
@@ -132,6 +183,9 @@ export function updateState(
   saveSession(session);
 }
 
+/**
+ * Updates detected intent.
+ */
 export function updateIntent(
   callId: string,
   intent: AIIntent,
@@ -144,6 +198,9 @@ export function updateIntent(
   saveSession(session);
 }
 
+/**
+ * Stores the latest AI analysis.
+ */
 export function updateAnalysis(
   callId: string,
   analysis: ConversationAnalysis,
@@ -156,10 +213,91 @@ export function updateAnalysis(
   saveSession(session);
 }
 
-export function getAllSessions() {
+/**
+ * Updates missing fields.
+ */
+export function setMissingFields(
+  callId: string,
+  fields: string[],
+): void {
+  const session =
+    getSession(callId);
+
+  session.missingFields = fields;
+
+  saveSession(session);
+}
+
+/**
+ * Updates the current conversation step.
+ */
+export function setCurrentStep(
+  callId: string,
+  step: string,
+): void {
+  const session =
+    getSession(callId);
+
+  session.currentStep = step;
+
+  saveSession(session);
+}
+
+/**
+ * Updates AI confidence.
+ */
+export function setConfidence(
+  callId: string,
+  confidence: number,
+): void {
+  const session =
+    getSession(callId);
+
+  session.confidence = confidence;
+
+  saveSession(session);
+}
+
+/**
+ * Marks conversation as completed.
+ */
+export function markCompleted(
+  callId: string,
+): void {
+  const session =
+    getSession(callId);
+
+  session.completed = true;
+
+  session.endedAt = now();
+
+  saveSession(session);
+}
+
+/**
+ * Requests human handoff.
+ */
+export function requestHumanTransfer(
+  callId: string,
+): void {
+  const session =
+    getSession(callId);
+
+  session.needsHuman = true;
+
+  saveSession(session);
+}
+
+/**
+ * Returns every active session.
+ */
+export function getAllSessions(): AIConversationSession[] {
   return [...sessions.values()];
 }
 
-export function clearSessions() {
+/**
+ * Clears all active sessions.
+ */
+export function clearSessions(): void {
   sessions.clear();
 }
