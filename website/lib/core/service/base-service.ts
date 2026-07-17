@@ -1,11 +1,6 @@
 import { AppError } from "@/lib/core/errors";
 import { logger } from "@/lib/core/logger";
-
-export interface ServiceResult<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
-}
+import type { ServiceResult } from "@/lib/core/shared";
 
 export abstract class BaseService {
   protected log(message: string, meta?: unknown): void {
