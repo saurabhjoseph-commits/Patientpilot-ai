@@ -1,15 +1,29 @@
 import { PlatformManifest } from "./manifest";
 
-const registry = new Map<string, PlatformManifest>();
+class PlatformRegistry {
+  private readonly manifests = new Map<string, PlatformManifest>();
 
-export function registerManifest(manifest: PlatformManifest) {
-  registry.set(manifest.id, manifest);
+  register(manifest: PlatformManifest): void {
+    if (this.manifests.has(manifest.id)) {
+      throw new Error(
+        `Platform module "${manifest.id}" is already registered.`
+      );
+    }
+
+    this.manifests.set(manifest.id, manifest);
+  }
+
+  get(id: string): PlatformManifest | undefined {
+    return this.manifests.get(id);
+  }
+
+  getAll(): PlatformManifest[] {
+    return [...this.manifests.values()];
+  }
+
+  isEnabled(id: string): boolean {
+    return this.manifests.get(id)?.enabled ?? false;
+  }
 }
 
-export function getManifest(id: string) {
-  return registry.get(id);
-}
-
-export function getAllManifests() {
-  return [...registry.values()];
-}
+export const platformRegistry = new PlatformRegistry();
