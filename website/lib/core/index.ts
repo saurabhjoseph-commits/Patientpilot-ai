@@ -3,3 +3,4 @@ export * from "./logger";
 export * from "./shared";
 export * from "./repository";
 export * from "./service";
+export * from "./container";
