@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import AdminShell from "@/components/admin/AdminShell";
 
 import { getCurrentUser } from "@/lib/auth-server";
+import { Permissions } from "@/lib/platform/domain/identity";
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -19,6 +20,8 @@ export default async function AdminLayout({
   }
 
   return (
-    <AdminShell>{children}</AdminShell>
+    <AdminShell canViewClinics={user.permissionCodes.includes(Permissions.ClinicRead)}>
+      {children}
+    </AdminShell>
   );
 }

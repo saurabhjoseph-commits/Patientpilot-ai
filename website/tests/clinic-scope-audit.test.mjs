@@ -201,6 +201,46 @@ test("live call monitoring is an authenticated staff API", () => {
   assert.match(route, /requirePermission\(request, Permissions\.CallsRead\)/);
 });
 
+test("clinic navigation and pages are gated by the server-derived clinic.read permission", () => {
+  const sidebar = read("components/admin/Sidebar.tsx");
+  const shell = read("components/admin/AdminShell.tsx");
+  const layout = read("app/admin/layout.tsx");
+  const clinicsPage = read("app/admin/clinics/page.tsx");
+  const newClinicPage = read("app/admin/clinics/new/page.tsx");
+
+  assert.match(sidebar, /name: "Clinics"/);
+  assert.match(sidebar, /href: "\/admin\/clinics"/);
+  assert.match(sidebar, /icon: Building2/);
+  assert.match(sidebar, /pathname\.startsWith\(item\.href\)/);
+  assert.match(sidebar, /canViewClinics/);
+  assert.match(shell, /canViewClinics/);
+  assert.match(layout, /user\.permissionCodes\.includes\(Permissions\.ClinicRead\)/);
+  assert.match(clinicsPage, /requireAdminPagePermission\(Permissions\.ClinicRead\)/);
+  assert.match(newClinicPage, /requireAdminPagePermission\(Permissions\.ClinicUpdate\)/);
+  assert.match(clinicsPage, /href="\/admin\/clinics\/new"/);
+});
+
+test("clinic onboarding uses India defaults, normalized slugs, and an atomic server-side creation path", () => {
+  const contract = read("lib/clinic/onboarding-contract.ts");
+  const route = read("app/api/admin/clinics/route.ts");
+  const wizard = read("app/admin/clinics/new/NewClinicWizard.tsx");
+  const migration = read("lib/supabase/migrations/0009_india_clinic_onboarding.sql");
+
+  assert.match(contract, /country: "India"/);
+  assert.match(contract, /timezone: "Asia\/Kolkata"/);
+  assert.match(contract, /currency: "INR"/);
+  assert.match(contract, /normalizeClinicSlug/);
+  assert.match(route, /requirePermission\(request, Permissions\.ClinicUpdate\)/);
+  assert.match(route, /validateClinicOnboarding/);
+  assert.match(route, /create_clinic_with_settings/);
+  assert.doesNotMatch(route, /tenantId|clinicId|roleCodes/);
+  assert.match(wizard, /if \(submitting\) return/);
+  assert.match(wizard, /router\.replace\("\/admin\/clinics\?created=1"\)/);
+  assert.match(migration, /insert into public\.clinics/);
+  assert.match(migration, /insert into public\.clinic_settings/);
+  assert.match(migration, /security definer/);
+});
+
 test("password recovery request is neutral, validated, and uses the supported Supabase API", () => {
   const page = read("app/forgot-password/page.tsx");
   const route = read("app/api/auth/password-recovery/route.ts");

@@ -81,6 +81,8 @@ export function useClinicWizard() {
 
       voice: "female-1",
 
+      greeting: "",
+
       appointmentBooking: true,
 
       appointmentCancellation: true,

@@ -7,6 +7,7 @@ export interface ClinicAISettings {
   enabled: boolean;
   language: string;
   voice: string;
+  greeting: string;
   appointmentBooking: boolean;
   appointmentCancellation: boolean;
   appointmentRescheduling: boolean;
@@ -93,6 +94,10 @@ export default function ClinicAISettingsForm({
               <option value="male-1">Professional Male</option>
               <option value="male-2">Friendly Male</option>
             </select>
+          </Field>
+
+          <Field label="Clinic Greeting">
+            <input value={value.greeting} disabled={disabled} onChange={(e) => update("greeting", e.target.value)} placeholder="Welcome to our clinic." className={inputClass} />
           </Field>
 
           <Field label="After Hours">

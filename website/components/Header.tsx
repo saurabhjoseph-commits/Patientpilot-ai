@@ -17,17 +17,17 @@ export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 border-b border-slate-200 bg-white/90 backdrop-blur-md">
+    <header className="fixed top-0 left-0 right-0 z-50 border-b border-sky-200/70 bg-gradient-to-r from-sky-100/95 via-white/90 to-blue-50/95 shadow-[0_8px_24px_rgba(15,23,42,0.08)] backdrop-blur-xl md:border-slate-200 md:bg-white/90 md:shadow-none md:backdrop-blur-md">
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
         {/* Logo */}
-        <Link href="/" className="flex items-center">
+        <Link href="/" className="flex h-full items-center" aria-label="PatientPilot AI home">
           <Image
             src="/images/patientpilot-logo.png"
             alt="PatientPilot AI"
             width={350}
             height={120}
             priority
-            className="h-20 w-auto"
+            className="h-20 w-auto mix-blend-multiply md:mix-blend-normal"
           />
         </Link>
 
@@ -56,8 +56,12 @@ export default function Header() {
 
         {/* Mobile Menu Button */}
         <button
-          className="md:hidden"
+          type="button"
+          className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-sky-100 bg-white text-blue-950 shadow-sm transition hover:bg-sky-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 md:hidden"
           onClick={() => setMobileOpen(!mobileOpen)}
+          aria-expanded={mobileOpen}
+          aria-controls="mobile-navigation"
+          aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
         >
           {mobileOpen ? <X size={28} /> : <Menu size={28} />}
         </button>
@@ -65,7 +69,7 @@ export default function Header() {
 
       {/* Mobile Menu */}
       {mobileOpen && (
-        <div className="border-t bg-white md:hidden">
+        <div id="mobile-navigation" className="border-t border-sky-100 bg-gradient-to-b from-white/95 to-sky-50/95 shadow-lg backdrop-blur-xl md:hidden">
           <nav className="flex flex-col p-6">
             {navItems.map((item) => (
               <Link

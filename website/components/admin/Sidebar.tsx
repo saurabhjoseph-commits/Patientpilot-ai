@@ -13,6 +13,7 @@ import {
   TerminalSquare,
   Settings,
   LogOut,
+  Building2,
 } from "lucide-react";
 
 const navigation = [
@@ -30,6 +31,12 @@ const navigation = [
     name: "Patients",
     href: "/admin/patients",
     icon: Users,
+  },
+  {
+    name: "Clinics",
+    href: "/admin/clinics",
+    icon: Building2,
+    requiresClinicRead: true,
   },
   {
     name: "Appointments",
@@ -63,7 +70,13 @@ const navigation = [
   },
 ];
 
-export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
+export default function Sidebar({
+  canViewClinics,
+  onNavigate,
+}: {
+  canViewClinics: boolean;
+  onNavigate?: () => void;
+}) {
   const pathname = usePathname();
 
   return (
@@ -84,7 +97,7 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 
       <nav className="flex-1 overflow-y-auto px-3 py-6">
         <ul className="space-y-2">
-          {navigation.map((item) => {
+          {navigation.filter((item) => !item.requiresClinicRead || canViewClinics).map((item) => {
             const Icon = item.icon;
 
             const active =
