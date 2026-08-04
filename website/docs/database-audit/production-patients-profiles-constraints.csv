@@ -1,0 +1,8 @@
+schema_name	table_name	constraint_name	constraint_definition
+public	patients	patients_pkey	PRIMARY KEY (id)
+public	patients	patients_preferred_contact_method_check	CHECK ((preferred_contact_method = ANY (ARRAY['phone'::text, 'sms'::text, 'email'::text])))
+public	patients	patients_status_check	CHECK ((status = ANY (ARRAY['new'::text, 'active'::text, 'inactive'::text])))
+public	profiles	profiles_clinic_id_fkey	FOREIGN KEY (clinic_id) REFERENCES clinics(id) ON DELETE CASCADE
+public	profiles	profiles_id_fkey	FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE
+public	profiles	profiles_pkey	PRIMARY KEY (id)
+public	profiles	profiles_role_check	CHECK ((role = ANY (ARRAY['super_admin'::text, 'owner'::text, 'manager'::text, 'receptionist'::text, 'dentist'::text])))

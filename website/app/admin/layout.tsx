@@ -1,8 +1,7 @@
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 
-import Sidebar from "@/components/admin/Sidebar";
-import Topbar from "@/components/admin/Topbar";
+import AdminShell from "@/components/admin/AdminShell";
 
 import { getCurrentUser } from "@/lib/auth-server";
 
@@ -20,16 +19,6 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-100">
-      <Sidebar />
-
-      <div className="flex flex-1 flex-col">
-        <Topbar />
-
-        <main className="flex-1 p-6">
-          {children}
-        </main>
-      </div>
-    </div>
+    <AdminShell>{children}</AdminShell>
   );
 }

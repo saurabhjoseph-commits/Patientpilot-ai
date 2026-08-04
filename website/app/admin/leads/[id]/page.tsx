@@ -23,6 +23,8 @@ import DeleteLeadButton from "@/components/admin/DeleteLeadButton";
 import CallHistory from "@/components/admin/CallHistory";
 
 import { LeadActivity } from "@/types/crm";
+import { requireAdminPagePermission } from "@/lib/auth-server";
+import { Permissions } from "@/lib/platform/domain/identity";
 
 interface LeadPageProps {
   params: Promise<{
@@ -33,6 +35,7 @@ interface LeadPageProps {
 export default async function LeadDetailsPage({
   params,
 }: LeadPageProps) {
+  const identity = await requireAdminPagePermission(Permissions.LeadsRead);
   const { id } = await params;
 
   // Fetch Lead
@@ -41,6 +44,7 @@ export default async function LeadDetailsPage({
       .from("contacts")
       .select("*")
       .eq("id", id)
+      .eq("clinic_id", identity.clinicId)
       .single();
 
   if (error || !data) {

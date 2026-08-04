@@ -1,17 +1,27 @@
 import { AppError } from "@/lib/core/errors";
 import { logger } from "@/lib/core/logger";
+import type { LogContext } from "@/lib/core/logger";
 import type { ServiceResult } from "@/lib/core/shared";
 
 export abstract class BaseService {
-  protected log(message: string, meta?: unknown): void {
+  protected log(
+    message: string,
+    meta?: LogContext
+  ): void {
     logger.info(message, meta);
   }
 
-  protected warn(message: string, meta?: unknown): void {
+  protected warn(
+    message: string,
+    meta?: LogContext
+  ): void {
     logger.warn(message, meta);
   }
 
-  protected fail(message: string, code = "SERVICE_ERROR"): never {
+  protected fail(
+    message: string,
+    code = "SERVICE_ERROR"
+  ): never {
     logger.error(message);
 
     throw new AppError(message, {
@@ -27,7 +37,9 @@ export abstract class BaseService {
     };
   }
 
-  protected error<T = never>(message: string): ServiceResult<T> {
+  protected error<T = never>(
+    message: string
+  ): ServiceResult<T> {
     return {
       success: false,
       error: message,

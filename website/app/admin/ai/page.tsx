@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { requireAdminPagePermission } from "@/lib/auth-server";
+import { Permissions } from "@/lib/platform/domain/identity";
 
 import {
   Bot,
@@ -20,6 +22,7 @@ const MODEL =
 const VERSION = "RC2";
 
 export default async function AIPage() {
+  await requireAdminPagePermission(Permissions.AiRead);
   return (
     <main className="min-h-screen bg-slate-100 p-8">
       <div className="mx-auto max-w-7xl space-y-8">

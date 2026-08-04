@@ -8,6 +8,10 @@ import {
   updateCallStatus,
   updateDuration,
 } from "@/lib/live";
+import { ClinicResolutionError, resolveTelephonyClinic } from "@/lib/clinic/clinic-scope";
+import { verifyTwilioWebhook } from "@/lib/telephony/twilio-webhook-security";
+import { getWebhookDeliveryExpiry } from "@/lib/telephony/twilio-webhook-security";
+import { createWebhookDeliveryService } from "@/lib/telephony/webhook-delivery-service";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,8 +28,28 @@ type TwilioStatus =
   | "canceled";
 
 export async function POST(request: NextRequest) {
+  let deliveryId: string | undefined;
   try {
-    const formData = await request.formData();
+    const verification = await verifyTwilioWebhook(request);
+    if (!verification.ok) {
+      return NextResponse.json({ error: "Unauthorized webhook." }, { status: verification.status });
+    }
+
+    const deliveries = createWebhookDeliveryService();
+    const receivedAt = new Date();
+    const claim = await deliveries.claim({
+      provider: "twilio",
+      fingerprint: verification.fingerprint,
+      route: request.nextUrl.pathname,
+      callSid: verification.callSid,
+      receivedAt,
+      expiresAt: getWebhookDeliveryExpiry(receivedAt),
+    });
+    if (!claim.claimed) return NextResponse.json({ success: true, duplicate: true });
+    if (!claim.deliveryId) throw new Error("Webhook delivery claim did not return an identifier.");
+    deliveryId = claim.deliveryId;
+
+    const { formData } = verification;
 
     const callSid = String(formData.get("CallSid") ?? "");
     const callStatus = String(
@@ -36,7 +60,6 @@ export async function POST(request: NextRequest) {
       formData.get("CallDuration") ?? 0
     );
 
-    const from = String(formData.get("From") ?? "");
     const to = String(formData.get("To") ?? "");
 
     if (!callSid) {
@@ -50,23 +73,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log("========================================");
-    console.log("📊 Twilio Status Callback");
-    console.log("========================================");
-    console.log({
-      callSid,
-      callStatus,
-      duration,
-      from,
-      to,
-      timestamp: new Date().toISOString(),
-    });
-    console.log("========================================");
+    resolveTelephonyClinic(to);
 
     /**
      * Ignore callbacks for unknown calls.
      */
     if (!getLiveCall(callSid)) {
+      await deliveries.markCompleted(deliveryId);
       return NextResponse.json({
         success: true,
         message: "Live call not found. Ignoring callback.",
@@ -137,16 +150,24 @@ export async function POST(request: NextRequest) {
         break;
     }
 
+    await deliveries.markCompleted(deliveryId);
     return NextResponse.json({
       success: true,
       callSid,
       status: callStatus,
     });
   } catch (error) {
-    console.error(
-      "❌ Twilio Status Callback Error:",
-      error
-    );
+    if (deliveryId) {
+      try {
+        await createWebhookDeliveryService().markFailed(deliveryId, "status_processing_failed");
+      } catch {
+        console.error("Twilio status webhook failure could not be recorded.");
+      }
+    }
+    if (error instanceof ClinicResolutionError) {
+      return NextResponse.json({ error: "Clinic routing is unavailable." }, { status: 403 });
+    }
+    console.error("Twilio status webhook failed.");
 
     return NextResponse.json(
       {
@@ -161,6 +182,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET() {
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json({ error: "Not found." }, { status: 404 });
+  }
   return NextResponse.json({
     service: "PatientPilot AI Status Callback",
     status: "online",

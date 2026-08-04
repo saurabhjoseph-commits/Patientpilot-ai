@@ -15,12 +15,16 @@ import DashboardCharts from "@/components/admin/analytics/DashboardCharts";
 import DemoLauncher from "@/components/admin/DemoLauncher";
 
 import CallCenterDashboard from "@/components/call-center/CallCenterDashboard";
+import { requireAdminPagePermission } from "@/lib/auth-server";
+import { Permissions } from "@/lib/platform/domain/identity";
 
 export default async function AdminPage() {
+  const identity = await requireAdminPagePermission(Permissions.DashboardRead);
   const { data: contacts, error } =
     await supabaseServer
       .from("contacts")
       .select("*")
+      .eq("clinic_id", identity.clinicId)
       .order("created_at", {
         ascending: false,
       });
@@ -29,6 +33,7 @@ export default async function AdminPage() {
     await supabaseServer
       .from("appointments")
       .select("*")
+      .eq("clinic_id", identity.clinicId)
       .order("created_at", {
         ascending: false,
       });

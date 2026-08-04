@@ -247,9 +247,15 @@ export function parseAIResponse(
   json: string,
 ): Omit<AIResponse, "state"> {
 
-  const raw =
-    JSON.parse(json) as RawAIResponse;
+  let raw: RawAIResponse;
 
+try {
+  raw = JSON.parse(json) as RawAIResponse;
+} catch {
+  throw new Error(
+    "Invalid AI response JSON."
+  );
+}
   return {
     message:
       asString(raw.message),

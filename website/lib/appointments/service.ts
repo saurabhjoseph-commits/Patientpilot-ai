@@ -17,6 +17,7 @@ import type {
   CreateAppointmentInput,
   UpdateAppointmentInput,
 } from "./types";
+import type { ClinicScope } from "@/lib/clinic/clinic-scope";
 
 /**
  * ============================================================
@@ -52,16 +53,17 @@ export async function createAppointmentService(
  * Get appointment.
  */
 export async function getAppointmentService(
-  id: string
+  id: string,
+  scope: ClinicScope,
 ): Promise<Appointment | null> {
-  return getAppointment(id);
+  return getAppointment(id, scope);
 }
 
 /**
  * List appointments.
  */
 export async function listAppointmentsService(
-  filters?: AppointmentFilters
+  filters: AppointmentFilters,
 ): Promise<Appointment[]> {
   return listAppointments(filters);
 }
@@ -71,7 +73,8 @@ export async function listAppointmentsService(
  */
 export async function updateAppointmentService(
   id: string,
-  input: UpdateAppointmentInput
+  input: UpdateAppointmentInput,
+  scope: ClinicScope,
 ): Promise<Appointment> {
   const validation =
     validateUpdateAppointment(input);
@@ -82,40 +85,43 @@ export async function updateAppointmentService(
     );
   }
 
-  return updateAppointment(id, input);
+  return updateAppointment(id, input, scope);
 }
 
 /**
  * Cancel appointment.
  */
 export async function cancelAppointmentService(
-  id: string
+  id: string,
+  scope: ClinicScope,
 ): Promise<Appointment> {
   return updateAppointment(id, {
-    status: "cancelled",
-  });
+    status: "Cancelled",
+  }, scope);
 }
 
 /**
  * Confirm appointment.
  */
 export async function confirmAppointmentService(
-  id: string
+  id: string,
+  scope: ClinicScope,
 ): Promise<Appointment> {
   return updateAppointment(id, {
-    status: "confirmed",
-  });
+    status: "Confirmed",
+  }, scope);
 }
 
 /**
  * Complete appointment.
  */
 export async function completeAppointmentService(
-  id: string
+  id: string,
+  scope: ClinicScope,
 ): Promise<Appointment> {
   return updateAppointment(id, {
-    status: "completed",
-  });
+    status: "Completed",
+  }, scope);
 }
 
 /**
@@ -124,20 +130,22 @@ export async function completeAppointmentService(
 export async function rescheduleAppointmentService(
   id: string,
   appointmentDate: string,
-  appointmentTime: string
+  appointmentTime: string,
+  scope: ClinicScope,
 ): Promise<Appointment> {
   return updateAppointment(id, {
     appointmentDate,
     appointmentTime,
-    status: "rescheduled",
-  });
+    status: "Rescheduled",
+  }, scope);
 }
 
 /**
  * Delete appointment.
  */
 export async function deleteAppointmentService(
-  id: string
+  id: string,
+  scope: ClinicScope,
 ): Promise<void> {
-  return deleteAppointment(id);
+  return deleteAppointment(id, scope);
 }

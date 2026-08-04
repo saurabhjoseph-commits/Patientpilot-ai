@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import {
   getActiveCallCount,
@@ -8,6 +8,8 @@ import {
 } from "@/lib/live/call-monitor";
 
 import type { LiveMonitorResponse } from "@/types/live-monitor";
+import { requirePermission } from "@/lib/infrastructure/identity/AuthorizationContext";
+import { Permissions } from "@/lib/platform/domain/identity";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,7 +23,10 @@ export const dynamic = "force-dynamic";
  * Returns all active calls together with summary statistics.
  */
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const authorization = requirePermission(request, Permissions.CallsRead);
+  if (authorization instanceof Response) return authorization;
+
   try {
     const calls = getAllLiveCalls();
 

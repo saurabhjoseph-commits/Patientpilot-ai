@@ -13,17 +13,19 @@ import type {
   CreateLeadRequest,
   Lead,
 } from "./types";
+import type { ClinicScope } from "@/lib/clinic/clinic-scope";
 
 export const leadService = {
   /**
    * Creates a new demo lead.
    */
   async bookDemo(
-    request: CreateLeadRequest
+    request: CreateLeadRequest,
+    scope: ClinicScope,
   ): Promise<Lead> {
     validateLead(request);
 
-    return createLead(request);
+    return createLead(request, scope);
   },
 
   /**
@@ -31,7 +33,8 @@ export const leadService = {
    */
   async updateStatus(
     id: number,
-    status: string
+    status: string,
+    scope: ClinicScope,
   ): Promise<Lead> {
     if (!status) {
       throw new ValidationError(
@@ -41,7 +44,8 @@ export const leadService = {
 
     const lead = await updateLeadStatus(
       id,
-      status
+      status,
+      scope,
     );
 
     await logLeadActivity({
@@ -57,8 +61,9 @@ export const leadService = {
    * Deletes a lead.
    */
   async delete(
-    id: number
+    id: number,
+    scope: ClinicScope,
   ): Promise<void> {
-    await deleteLead(id);
+    await deleteLead(id, scope);
   },
 };

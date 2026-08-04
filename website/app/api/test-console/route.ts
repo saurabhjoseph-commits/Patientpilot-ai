@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { executeConversationWorkflow } from "@/lib/workflows/conversation-workflow";
+import { resolveAdminClinic } from "@/lib/clinic/clinic-scope";
+import { requirePermission } from "@/lib/infrastructure/identity/AuthorizationContext";
+import { Permissions } from "@/lib/platform/domain/identity";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,6 +16,11 @@ interface TestConsoleRequest {
 export async function POST(
   request: NextRequest
 ) {
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+  const authorization = requirePermission(request, Permissions.AiConfigure);
+  if (authorization instanceof Response) return authorization;
   try {
     const body =
       (await request.json()) as TestConsoleRequest;
@@ -39,7 +47,8 @@ export async function POST(
     const workflow =
       await executeConversationWorkflow(
         callSid,
-        message
+        message,
+        resolveAdminClinic(authorization),
       );
 
     return NextResponse.json({
@@ -127,7 +136,12 @@ export async function POST(
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+  const authorization = requirePermission(request, Permissions.AiConfigure);
+  if (authorization instanceof Response) return authorization;
   return NextResponse.json({
     service:
       "PatientPilot AI Developer Console",

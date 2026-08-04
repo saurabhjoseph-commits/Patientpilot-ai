@@ -35,16 +35,14 @@ import type {
 
 export function mapAppointmentInput(
   session: AIConversationSession,
-): CreateAppointmentInput {
+): Omit<CreateAppointmentInput, "clinicId"> {
   const clinic = getClinicContext();
 
   return {
-    clinicName: clinic.name,
-
     patientName:
       session.patient.fullName ?? "",
 
-    phoneNumber:
+    phone:
       session.patient.phone ?? "",
 
     appointmentDate:
@@ -53,11 +51,8 @@ export function mapAppointmentInput(
     appointmentTime:
       session.appointment.appointmentTime ?? "",
 
-    reason:
+    service:
       session.appointment.reason ?? "",
-
-    callSid:
-      session.callId,
   };
 }
 

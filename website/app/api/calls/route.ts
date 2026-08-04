@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase-server";
+import { resolveAdminClinic } from "@/lib/clinic/clinic-scope";
+import { requirePermission } from "@/lib/infrastructure/identity/AuthorizationContext";
+import { Permissions } from "@/lib/platform/domain/identity";
 
 export async function POST(request: NextRequest) {
+  const authorization = requirePermission(request, Permissions.CallsManage);
+  if (authorization instanceof Response) return authorization;
   try {
     const body = await request.json();
 
@@ -28,6 +33,7 @@ export async function POST(request: NextRequest) {
     const { data, error } = await supabaseServer
       .from("calls")
       .insert({
+        clinic_id: resolveAdminClinic(authorization).clinicId,
         call_sid,
         patient_name,
         phone,

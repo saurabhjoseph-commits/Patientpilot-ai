@@ -6,6 +6,11 @@ import type {
   UpdateAppointmentInput,
   AppointmentFilters,
 } from "./types";
+import type { ClinicScope } from "@/lib/clinic/clinic-scope";
+import {
+  fromAppointmentPersistence,
+  toAppointmentPersistence,
+} from "./mapper";
 
 /**
  * ============================================================
@@ -29,18 +34,7 @@ export async function createAppointment(
 ): Promise<Appointment> {
   const { data, error } = await supabaseServer
     .from(TABLE)
-    .insert({
-      clinic_name: input.clinicName,
-      patient_name: input.patientName,
-      phone_number: input.phoneNumber,
-      appointment_date: input.appointmentDate,
-      appointment_time: input.appointmentTime,
-      reason: input.reason,
-      status: "pending",
-      call_sid: input.callSid,
-      lead_id: input.leadId,
-      notes: input.notes,
-    })
+    .insert(toAppointmentPersistence(input))
     .select()
     .single();
 
@@ -48,26 +42,28 @@ export async function createAppointment(
     throw error;
   }
 
-  return mapAppointment(data);
+  return fromAppointmentPersistence(data);
 }
 
 /**
  * Get appointment by ID.
  */
 export async function getAppointment(
-  id: string
+  id: string,
+  scope: ClinicScope,
 ): Promise<Appointment | null> {
   const { data, error } = await supabaseServer
     .from(TABLE)
     .select("*")
     .eq("id", id)
+    .eq("clinic_id", scope.clinicId)
     .maybeSingle();
 
   if (error) {
     throw error;
   }
 
-  return data ? mapAppointment(data) : null;
+  return data ? fromAppointmentPersistence(data) : null;
 }
 
 /**
@@ -82,15 +78,10 @@ export async function listAppointments(
     .order("appointment_date")
     .order("appointment_time");
 
+  query = query.eq("clinic_id", filters?.clinicId);
+
   if (filters?.status) {
     query = query.eq("status", filters.status);
-  }
-
-  if (filters?.clinicName) {
-    query = query.eq(
-      "clinic_name",
-      filters.clinicName
-    );
   }
 
   if (filters?.appointmentDate) {
@@ -107,10 +98,10 @@ export async function listAppointments(
     );
   }
 
-  if (filters?.phoneNumber) {
+  if (filters?.phone) {
     query = query.eq(
-      "phone_number",
-      filters.phoneNumber
+      "phone",
+      filters.phone
     );
   }
 
@@ -120,7 +111,7 @@ export async function listAppointments(
     throw error;
   }
 
-  return (data ?? []).map(mapAppointment);
+  return (data ?? []).map(fromAppointmentPersistence);
 }
 
 /**
@@ -128,15 +119,19 @@ export async function listAppointments(
  */
 export async function updateAppointment(
   id: string,
-  input: UpdateAppointmentInput
+  input: UpdateAppointmentInput,
+  scope: ClinicScope,
 ): Promise<Appointment> {
   const updates: Record<string, unknown> = {};
 
   if (input.patientName !== undefined)
     updates.patient_name = input.patientName;
 
-  if (input.phoneNumber !== undefined)
-    updates.phone_number = input.phoneNumber;
+  if (input.phone !== undefined)
+    updates.phone = input.phone;
+
+  if (input.email !== undefined)
+    updates.email = input.email;
 
   if (input.appointmentDate !== undefined)
     updates.appointment_date =
@@ -146,8 +141,8 @@ export async function updateAppointment(
     updates.appointment_time =
       input.appointmentTime;
 
-  if (input.reason !== undefined)
-    updates.reason = input.reason;
+  if (input.service !== undefined)
+    updates.service = input.service;
 
   if (input.status !== undefined)
     updates.status = input.status;
@@ -155,13 +150,14 @@ export async function updateAppointment(
   if (input.notes !== undefined)
     updates.notes = input.notes;
 
-  if (input.leadId !== undefined)
-    updates.lead_id = input.leadId;
+  if (input.source !== undefined)
+    updates.source = input.source;
 
   const { data, error } = await supabaseServer
     .from(TABLE)
     .update(updates)
     .eq("id", id)
+    .eq("clinic_id", scope.clinicId)
     .select()
     .single();
 
@@ -169,42 +165,24 @@ export async function updateAppointment(
     throw error;
   }
 
-  return mapAppointment(data);
+  return fromAppointmentPersistence(data);
 }
 
 /**
  * Delete appointment.
  */
 export async function deleteAppointment(
-  id: string
+  id: string,
+  scope: ClinicScope,
 ): Promise<void> {
   const { error } = await supabaseServer
     .from(TABLE)
     .delete()
-    .eq("id", id);
+    .eq("id", id)
+    .eq("clinic_id", scope.clinicId);
 
   if (error) {
     throw error;
   }
 }
 
-/**
- * Maps Supabase row into Appointment.
- */
-function mapAppointment(row: any): Appointment {
-  return {
-    id: row.id,
-    clinicName: row.clinic_name,
-    patientName: row.patient_name,
-    phoneNumber: row.phone_number,
-    appointmentDate: row.appointment_date,
-    appointmentTime: row.appointment_time,
-    reason: row.reason,
-    status: row.status,
-    callSid: row.call_sid,
-    leadId: row.lead_id,
-    notes: row.notes,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-  };
-}

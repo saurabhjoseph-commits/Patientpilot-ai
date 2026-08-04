@@ -1,0 +1,81 @@
+table_schema	table_name	constraint_name	constraint_type	column_name	foreign_table_name	foreign_column_name
+public	ai_actions	2200_17811_1_not_null	CHECK	null	null	null
+public	ai_actions	ai_actions_call_id_fkey	FOREIGN KEY	call_id	calls	id
+public	ai_actions	ai_actions_pkey	PRIMARY KEY	id	ai_actions	id
+public	appointments	2200_17742_10_not_null	CHECK	null	null	null
+public	appointments	2200_17742_1_not_null	CHECK	null	null	null
+public	appointments	2200_17742_2_not_null	CHECK	null	null	null
+public	appointments	2200_17742_3_not_null	CHECK	null	null	null
+public	appointments	2200_17742_6_not_null	CHECK	null	null	null
+public	appointments	2200_17742_7_not_null	CHECK	null	null	null
+public	appointments	2200_17742_8_not_null	CHECK	null	null	null
+public	appointments	2200_17742_9_not_null	CHECK	null	null	null
+public	appointments	appointments_clinic_id_fkey	FOREIGN KEY	clinic_id	clinics	id
+public	appointments	appointments_pkey	PRIMARY KEY	id	appointments	id
+public	call_messages	2200_17797_1_not_null	CHECK	null	null	null
+public	call_messages	2200_17797_3_not_null	CHECK	null	null	null
+public	call_messages	2200_17797_4_not_null	CHECK	null	null	null
+public	call_messages	call_messages_call_id_fkey	FOREIGN KEY	call_id	calls	id
+public	call_messages	call_messages_clinic_id_fkey	FOREIGN KEY	clinic_id	clinics	id
+public	call_messages	call_messages_pkey	PRIMARY KEY	id	call_messages	id
+public	call_summaries	2200_18047_12_not_null	CHECK	null	null	null
+public	call_summaries	2200_18047_14_not_null	CHECK	null	null	null
+public	call_summaries	2200_18047_15_not_null	CHECK	null	null	null
+public	call_summaries	2200_18047_1_not_null	CHECK	null	null	null
+public	call_summaries	2200_18047_2_not_null	CHECK	null	null	null
+public	call_summaries	2200_18047_3_not_null	CHECK	null	null	null
+public	call_summaries	2200_18047_6_not_null	CHECK	null	null	null
+public	call_summaries	2200_18047_7_not_null	CHECK	null	null	null
+public	call_summaries	2200_18047_8_not_null	CHECK	null	null	null
+public	call_summaries	2200_18047_9_not_null	CHECK	null	null	null
+public	call_summaries	call_summaries_outcome_check	CHECK	null	call_summaries	outcome
+public	call_summaries	call_summaries_patient_id_fkey	FOREIGN KEY	patient_id	patients	id
+public	call_summaries	call_summaries_pkey	PRIMARY KEY	id	call_summaries	id
+public	call_summaries	call_summaries_call_sid_key	UNIQUE	call_sid	call_summaries	call_sid
+public	calls	2200_17782_1_not_null	CHECK	null	null	null
+public	calls	2200_17782_4_not_null	CHECK	null	null	null
+public	calls	calls_clinic_id_fkey	FOREIGN KEY	clinic_id	clinics	id
+public	calls	calls_pkey	PRIMARY KEY	id	calls	id
+public	calls	calls_call_sid_key	UNIQUE	call_sid	calls	call_sid
+public	clinic_settings	2200_17883_1_not_null	CHECK	null	null	null
+public	clinic_settings	clinic_settings_clinic_id_fkey	FOREIGN KEY	clinic_id	clinics	id
+public	clinic_settings	clinic_settings_pkey	PRIMARY KEY	id	clinic_settings	id
+public	clinic_settings	clinic_settings_clinic_id_key	UNIQUE	clinic_id	clinic_settings	clinic_id
+public	clinics	2200_17850_1_not_null	CHECK	null	null	null
+public	clinics	2200_17850_2_not_null	CHECK	null	null	null
+public	clinics	2200_17850_3_not_null	CHECK	null	null	null
+public	clinics	clinics_pkey	PRIMARY KEY	id	clinics	id
+public	clinics	clinics_slug_key	UNIQUE	slug	clinics	slug
+public	contacts	2200_17621_1_not_null	CHECK	null	null	null
+public	contacts	2200_17621_2_not_null	CHECK	null	null	null
+public	contacts	2200_17621_3_not_null	CHECK	null	null	null
+public	contacts	2200_17621_4_not_null	CHECK	null	null	null
+public	contacts	2200_17621_5_not_null	CHECK	null	null	null
+public	contacts	contacts_clinic_id_fkey	FOREIGN KEY	clinic_id	clinics	id
+public	contacts	contacts_pkey	PRIMARY KEY	id	contacts	id
+public	lead_activity	2200_17994_1_not_null	CHECK	null	null	null
+public	lead_activity	2200_17994_2_not_null	CHECK	null	null	null
+public	lead_activity	2200_17994_3_not_null	CHECK	null	null	null
+public	lead_activity	2200_17994_4_not_null	CHECK	null	null	null
+public	lead_activity	lead_activity_lead_id_fkey	FOREIGN KEY	lead_id	contacts	id
+public	lead_activity	lead_activity_pkey	PRIMARY KEY	id	lead_activity	id
+public	patients	2200_18033_12_not_null	CHECK	null	null	null
+public	patients	2200_18033_13_not_null	CHECK	null	null	null
+public	patients	2200_18033_16_not_null	CHECK	null	null	null
+public	patients	2200_18033_17_not_null	CHECK	null	null	null
+public	patients	2200_18033_1_not_null	CHECK	null	null	null
+public	patients	2200_18033_2_not_null	CHECK	null	null	null
+public	patients	2200_18033_3_not_null	CHECK	null	null	null
+public	patients	2200_18033_4_not_null	CHECK	null	null	null
+public	patients	2200_18033_5_not_null	CHECK	null	null	null
+public	patients	2200_18033_6_not_null	CHECK	null	null	null
+public	patients	patients_preferred_contact_method_check	CHECK	null	patients	preferred_contact_method
+public	patients	patients_status_check	CHECK	null	patients	status
+public	patients	patients_pkey	PRIMARY KEY	id	patients	id
+public	profiles	2200_17863_1_not_null	CHECK	null	null	null
+public	profiles	2200_17863_3_not_null	CHECK	null	null	null
+public	profiles	2200_17863_4_not_null	CHECK	null	null	null
+public	profiles	profiles_role_check	CHECK	null	profiles	role
+public	profiles	profiles_clinic_id_fkey	FOREIGN KEY	clinic_id	clinics	id
+public	profiles	profiles_id_fkey	FOREIGN KEY	id	null	null
+public	profiles	profiles_pkey	PRIMARY KEY	id	profiles	id

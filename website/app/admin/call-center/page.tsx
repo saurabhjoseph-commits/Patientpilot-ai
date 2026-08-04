@@ -1,6 +1,9 @@
 import Link from "next/link";
+import { requireAdminPagePermission } from "@/lib/auth-server";
+import { Permissions } from "@/lib/platform/domain/identity";
 
-export default function CallCenterPage() {
+export default async function CallCenterPage() {
+  await requireAdminPagePermission(Permissions.CallsRead);
   return (
     <main className="mx-auto max-w-7xl p-8">
       <div className="mb-8">

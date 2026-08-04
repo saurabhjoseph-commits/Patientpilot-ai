@@ -1,0 +1,12 @@
+schemaname	tablename	policyname	permissive	roles	cmd	qual	with_check
+public	ai_actions	Allow service role full access - ai_actions	PERMISSIVE	{public}	ALL	TRUE	TRUE
+public	appointments	Allow all with service role	PERMISSIVE	{public}	ALL	TRUE	TRUE
+public	appointments	Allow service role full access - appointments	PERMISSIVE	{public}	ALL	TRUE	TRUE
+public	call_messages	Allow service role full access - call_messages	PERMISSIVE	{public}	ALL	TRUE	TRUE
+public	call_summaries	Authenticated read summaries	PERMISSIVE	{authenticated}	SELECT	TRUE	null
+public	call_summaries	Service role full access summaries	PERMISSIVE	{public}	ALL	TRUE	TRUE
+public	calls	Allow service role full access - calls	PERMISSIVE	{public}	ALL	TRUE	TRUE
+public	contacts	Anyone can insert contacts	PERMISSIVE	{anon}	INSERT	null	TRUE
+public	contacts	Authenticated users can view contacts	PERMISSIVE	{authenticated}	SELECT	TRUE	null
+public	patients	Authenticated read patients	PERMISSIVE	{authenticated}	SELECT	TRUE	null
+public	patients	Service role full access patients	PERMISSIVE	{public}	ALL	TRUE	TRUE

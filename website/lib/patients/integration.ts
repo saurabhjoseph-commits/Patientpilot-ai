@@ -30,7 +30,8 @@ export interface PatientIntegrationResult {
  * Synchronize a patient from an appointment.
  */
 export async function syncPatient(
-  appointment: Appointment
+  appointment: Appointment,
+  clinicName: string,
 ): Promise<PatientIntegrationResult> {
   const names = splitName(
     appointment.patientName
@@ -38,8 +39,7 @@ export async function syncPatient(
 
   const patient =
     await findOrCreatePatient({
-      clinicName:
-        appointment.clinicName,
+      clinicName,
 
       firstName:
         names.firstName,
@@ -48,12 +48,12 @@ export async function syncPatient(
         names.lastName,
 
       phoneNumber:
-        appointment.phoneNumber,
+        appointment.phone ?? "",
 
       preferredDentist: undefined,
 
       notes:
-        appointment.notes,
+        appointment.notes ?? undefined,
     });
 
   const updated =

@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase-server";
 import { logLeadActivity } from "@/lib/activity";
+import { requirePermission } from "@/lib/infrastructure/identity/AuthorizationContext";
+import { Permissions } from "@/lib/platform/domain/identity";
+import { resolveAdminClinic } from "@/lib/clinic/clinic-scope";
 
 export async function POST(request: NextRequest) {
+  const authorization = requirePermission(request, Permissions.LeadsUpdate);
+  if (authorization instanceof Response) return authorization;
+  const clinicId = resolveAdminClinic(authorization).clinicId;
   try {
     const {
       leadId,
@@ -30,7 +36,8 @@ export async function POST(request: NextRequest) {
             contacted_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           })
-          .eq("id", leadId);
+          .eq("id", leadId)
+          .eq("clinic_id", clinicId);
 
         if (error) throw error;
 
@@ -51,7 +58,8 @@ export async function POST(request: NextRequest) {
             demo_date: demoDate,
             updated_at: new Date().toISOString(),
           })
-          .eq("id", leadId);
+          .eq("id", leadId)
+          .eq("clinic_id", clinicId);
 
         if (error) throw error;
 
@@ -71,7 +79,8 @@ export async function POST(request: NextRequest) {
             converted: true,
             updated_at: new Date().toISOString(),
           })
-          .eq("id", leadId);
+          .eq("id", leadId)
+          .eq("clinic_id", clinicId);
 
         if (error) throw error;
 

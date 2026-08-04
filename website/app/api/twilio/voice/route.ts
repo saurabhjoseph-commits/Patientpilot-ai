@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import VoiceResponse from "twilio/lib/twiml/VoiceResponse";
 
 import { startConversation } from "@/lib/ai";
+import { ClinicResolutionError, resolveTelephonyClinic } from "@/lib/clinic/clinic-scope";
 import { TWILIO_WEBHOOKS } from "@/lib/config/app";
+import { verifyTwilioWebhook } from "@/lib/telephony/twilio-webhook-security";
+import { createWebhookDeliveryService } from "@/lib/telephony/webhook-delivery-service";
+import { getWebhookDeliveryExpiry } from "@/lib/telephony/twilio-webhook-security";
 
 import {
   addEvent,
@@ -16,8 +20,27 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
+  let deliveryId: string | undefined;
   try {
-    const formData = await request.formData();
+    const verification = await verifyTwilioWebhook(request);
+    if (!verification.ok) {
+      return NextResponse.json({ error: "Unauthorized webhook." }, { status: verification.status });
+    }
+    const deliveries = createWebhookDeliveryService();
+    const receivedAt = new Date();
+    const claim = await deliveries.claim({
+      provider: "twilio",
+      fingerprint: verification.fingerprint,
+      route: request.nextUrl.pathname,
+      callSid: verification.callSid,
+      receivedAt,
+      expiresAt: getWebhookDeliveryExpiry(receivedAt),
+    });
+    if (!claim.claimed) return emptyTwimlResponse();
+    if (!claim.deliveryId) throw new Error("Webhook delivery claim did not return an identifier.");
+    deliveryId = claim.deliveryId;
+
+    const { formData } = verification;
 
     const callSid = String(formData.get("CallSid") ?? "");
     const from = String(formData.get("From") ?? "");
@@ -34,16 +57,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log("========================================");
-    console.log("📞 Incoming Call");
-    console.log("========================================");
-    console.log({
-      callSid,
-      from,
-      to,
-      timestamp: new Date().toISOString(),
-    });
-    console.log("========================================");
+    resolveTelephonyClinic(to);
 
     /**
      * ----------------------------------------
@@ -112,6 +126,7 @@ export async function POST(request: NextRequest) {
 
     twiml.hangup();
 
+    await deliveries.markCompleted(deliveryId);
     return new NextResponse(twiml.toString(), {
       status: 200,
       headers: {
@@ -119,10 +134,17 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error(
-      "❌ Twilio Voice Webhook Error:",
-      error
-    );
+    if (deliveryId) {
+      try {
+        await createWebhookDeliveryService().markFailed(deliveryId, "voice_processing_failed");
+      } catch {
+        console.error("Twilio voice webhook failure could not be recorded.");
+      }
+    }
+    if (error instanceof ClinicResolutionError) {
+      return NextResponse.json({ error: "Clinic routing is unavailable." }, { status: 403 });
+    }
+    console.error("Twilio voice webhook failed.");
 
     const twiml = new VoiceResponse();
 
@@ -145,10 +167,20 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET() {
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json({ error: "Not found." }, { status: 404 });
+  }
   return NextResponse.json({
     service: "PatientPilot AI Voice Webhook",
     status: "online",
     endpoint: "/api/twilio/voice",
     timestamp: new Date().toISOString(),
+  });
+}
+
+function emptyTwimlResponse(): NextResponse {
+  return new NextResponse("<?xml version=\"1.0\" encoding=\"UTF-8\"?><Response></Response>", {
+    status: 200,
+    headers: { "Content-Type": "text/xml" },
   });
 }

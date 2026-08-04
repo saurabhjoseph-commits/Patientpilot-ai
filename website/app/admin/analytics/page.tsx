@@ -13,19 +13,24 @@ import {
   Phone,
   DollarSign,
 } from "lucide-react";
+import { requireAdminPagePermission } from "@/lib/auth-server";
+import { Permissions } from "@/lib/platform/domain/identity";
 
 export const dynamic = "force-dynamic";
 
 export default async function AnalyticsPage() {
+  const identity = await requireAdminPagePermission(Permissions.AnalyticsRead);
   const { data: contacts } =
     await supabaseServer
       .from("contacts")
-      .select("*");
+      .select("*")
+      .eq("clinic_id", identity.clinicId);
 
   const { data: appointments } =
     await supabaseServer
       .from("appointments")
-      .select("*");
+      .select("*")
+      .eq("clinic_id", identity.clinicId);
 
   const analytics =
     buildDashboardAnalytics(

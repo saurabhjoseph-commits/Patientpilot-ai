@@ -2,25 +2,27 @@
 
 import {
   Bell,
+  Menu,
   Search,
   UserCircle,
 } from "lucide-react";
 
-export default function Topbar() {
+export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
   return (
-    <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shadow-sm">
+    <header className="flex min-h-16 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3 shadow-sm sm:px-6">
       {/* Left */}
-      <div>
-        <h2 className="text-2xl font-bold text-slate-800">
+      <div className="flex min-w-0 items-center gap-3">
+        <button aria-label="Open navigation" onClick={onMenuClick} className="rounded-lg p-2 hover:bg-slate-100 lg:hidden"><Menu size={24} /></button>
+        <div className="min-w-0"><h2 className="truncate text-lg font-bold text-slate-800 sm:text-2xl">
           Dashboard
         </h2>
         <p className="text-sm text-slate-500">
           Welcome back, Admin 👋
-        </p>
+        </p></div>
       </div>
 
       {/* Right */}
-      <div className="flex items-center gap-4">
+      <div className="flex shrink-0 items-center gap-2 sm:gap-4">
         {/* Search */}
         <div className="relative hidden md:block">
           <Search

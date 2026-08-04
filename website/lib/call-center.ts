@@ -1,12 +1,14 @@
 import { supabaseServer } from "@/lib/supabase-server";
+import type { ClinicScope } from "@/lib/clinic/clinic-scope";
 
 /**
  * Get all active calls
  */
-export async function getActiveCalls() {
+export async function getActiveCalls(scope: ClinicScope) {
   const { data, error } = await supabaseServer
     .from("calls")
     .select("*")
+    .eq("clinic_id", scope.clinicId)
     .in("status", ["ringing", "connected", "in_progress"])
     .order("started_at", { ascending: false });
 
@@ -21,10 +23,11 @@ export async function getActiveCalls() {
 /**
  * Get recent calls
  */
-export async function getRecentCalls(limit: number = 25) {
+export async function getRecentCalls(scope: ClinicScope, limit: number = 25) {
   const { data, error } = await supabaseServer
     .from("calls")
     .select("*")
+    .eq("clinic_id", scope.clinicId)
     .order("started_at", { ascending: false })
     .limit(limit);
 
@@ -39,11 +42,19 @@ export async function getRecentCalls(limit: number = 25) {
 /**
  * Get transcript for a call
  */
-export async function getCallTranscript(callId: string) {
+export async function getCallTranscript(scope: ClinicScope, callId: string) {
+  const { data: call, error: callError } = await supabaseServer
+    .from("calls")
+    .select("id")
+    .eq("id", callId)
+    .eq("clinic_id", scope.clinicId)
+    .maybeSingle();
+  if (callError || !call) return [];
   const { data, error } = await supabaseServer
     .from("call_messages")
     .select("*")
     .eq("call_id", callId)
+    .eq("clinic_id", scope.clinicId)
     .order("created_at", { ascending: true });
 
   if (error) {
@@ -57,10 +68,11 @@ export async function getCallTranscript(callId: string) {
 /**
  * Get upcoming appointments
  */
-export async function getUpcomingAppointments(limit: number = 10) {
+export async function getUpcomingAppointments(scope: ClinicScope, limit: number = 10) {
   const { data, error } = await supabaseServer
     .from("appointments")
     .select("*")
+    .eq("clinic_id", scope.clinicId)
     .order("appointment_date", { ascending: true })
     .limit(limit);
 
@@ -75,15 +87,15 @@ export async function getUpcomingAppointments(limit: number = 10) {
 /**
  * Dashboard Metrics
  */
-export async function getDashboardMetrics() {
+export async function getDashboardMetrics(scope: ClinicScope) {
   const [
     activeCalls,
     recentCalls,
     appointments,
   ] = await Promise.all([
-    getActiveCalls(),
-    getRecentCalls(10),
-    getUpcomingAppointments(10),
+    getActiveCalls(scope),
+    getRecentCalls(scope, 10),
+    getUpcomingAppointments(scope, 10),
   ]);
 
   return {

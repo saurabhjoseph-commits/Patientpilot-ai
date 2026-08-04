@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase-server";
+import { resolveAdminClinic } from "@/lib/clinic/clinic-scope";
+import { requirePermission } from "@/lib/infrastructure/identity/AuthorizationContext";
+import { Permissions } from "@/lib/platform/domain/identity";
 
 export async function POST(request: NextRequest) {
+  const authorization = requirePermission(request, Permissions.CallsManage);
+  if (authorization instanceof Response) return authorization;
   try {
     const body = await request.json();
 
@@ -17,10 +22,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const clinicId = resolveAdminClinic(authorization).clinicId;
+    const { data: parentCall, error: parentError } = await supabaseServer
+      .from("calls")
+      .select("id, clinic_id")
+      .eq("id", call_id)
+      .eq("clinic_id", clinicId)
+      .maybeSingle();
+
+    if (parentError) throw parentError;
+    if (!parentCall) {
+      return NextResponse.json({ success: false, message: "Call not found." }, { status: 404 });
+    }
+
     const { data, error } = await supabaseServer
       .from("call_messages")
       .insert({
         call_id,
+        clinic_id: parentCall.clinic_id,
         sender,
         message,
       })

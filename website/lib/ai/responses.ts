@@ -5,110 +5,117 @@ import {
   DEFAULT_MODEL,
 } from "./client";
 
-import { buildSystemPrompt } from "./prompts";
-import { conversationResponseSchema } from "./schema";
+import {
+  buildSystemPrompt,
+} from "./prompts";
 
 import type {
   AIResponse,
   ConversationRequest,
-  ConversationMessage,
-} from "./core";
-
-import type { ResponseInput } from "openai/resources/responses/responses";
+} from "./types";
 
 /**
  * ============================================================
  * PatientPilot AI
- * OpenAI Response Service
+ * AI Response Engine
+ * ============================================================
+ *
+ * Responsibilities
+ * ----------------
+ * • Build the OpenAI prompt
+ * • Execute the model
+ * • Parse structured JSON
+ * • Return a strongly typed AIResponse
  * ============================================================
  */
 
-function buildConversationInput(
-  messages: ConversationMessage[],
-): ResponseInput {
-  return messages.map((message) => ({
-    role:
-      message.role === "assistant"
-        ? "assistant"
-        : message.role === "system"
-        ? "system"
-        : "user",
+const RESPONSE_TEMPERATURE = 0.3;
 
-    content: [
-      {
-        type: "input_text",
-        text: message.content,
-      },
-    ],
-  })) as ResponseInput;
-}
-
-export async function generateAIResponse(
+/**
+ * Executes the OpenAI Responses API.
+ */
+async function executeCompletion(
   request: ConversationRequest,
-): Promise<AIResponse> {
+) {
   const client = getOpenAIClient();
 
-  const prompt = buildSystemPrompt(
-    request.context,
-    request.state,
-  );
-
-  const input: ResponseInput = [
-    {
-      role: "system",
-      content: [
-        {
-          type: "input_text",
-          text: prompt,
-        },
-      ],
-    },
-
-    ...buildConversationInput(
-      request.state.messages,
-    ),
-
-    {
-      role: "user",
-      content: [
-        {
-          type: "input_text",
-          text: request.latestMessage.content,
-        },
-      ],
-    },
-  ];
+  const systemPrompt =
+    buildSystemPrompt(
+      request.context,
+      request.state,
+    );
 
   const completion =
     await client.responses.create({
       model: DEFAULT_MODEL,
 
-      input,
+      temperature: RESPONSE_TEMPERATURE,
 
-      text: {
-        format: {
-          type: "json_schema",
-
-          name:
-            conversationResponseSchema.name,
-
-          strict: true,
-
-          schema:
-            conversationResponseSchema.schema,
+      input: [
+        {
+          role: "system",
+          content: systemPrompt,
         },
-      },
+        {
+          role: "user",
+          content:
+            request.latestMessage.content,
+        },
+      ],
     });
 
-  if (!completion.output_text) {
+  return completion;
+}
+
+/**
+ * Parses the JSON returned by OpenAI.
+ */
+function parseResponse(
+  completion: Awaited<
+    ReturnType<typeof executeCompletion>
+  >,
+): Omit<AIResponse, "state"> {
+  if (!completion.output_text?.trim()) {
     throw new Error(
       "OpenAI returned an empty response.",
     );
   }
 
-  const parsed = JSON.parse(
-    completion.output_text,
-  ) as Omit<AIResponse, "state">;
+  try {
+    return JSON.parse(
+      completion.output_text,
+    ) as Omit<
+      AIResponse,
+      "state"
+    >;
+  } catch {
+    console.error(
+      "Invalid JSON returned by OpenAI:",
+      completion.output_text,
+    );
+
+    throw new Error(
+      "OpenAI returned invalid JSON.",
+    );
+  }
+}
+
+/**
+ * ============================================================
+ * Public API
+ * ============================================================
+ *
+ * Generates one structured AI response for the
+ * current conversation turn.
+ */
+export async function generateAIResponse(
+  request: ConversationRequest,
+): Promise<AIResponse> {
+  const completion =
+    await executeCompletion(request);
+
+  const parsed =
+    parseResponse(completion);
 
   return {
     ...parsed,
@@ -116,7 +123,8 @@ export async function generateAIResponse(
     state: {
       ...request.state,
 
-      updatedAt: new Date().toISOString(),
+      updatedAt:
+        new Date().toISOString(),
     },
   };
 }

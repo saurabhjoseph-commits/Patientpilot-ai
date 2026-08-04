@@ -1,0 +1,7 @@
+table_name	total_rows	null_clinic_id_rows
+clinics	0	null
+contacts	3	3
+appointments	4	4
+calls	4	4
+call_messages	1	1
+clinic_settings	0	0

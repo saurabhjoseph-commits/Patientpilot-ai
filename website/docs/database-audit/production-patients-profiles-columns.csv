@@ -1,0 +1,24 @@
+table_schema	table_name	column_name	ordinal_position	data_type	udt_name	is_nullable	column_default
+public	patients	id	1	uuid	uuid	NO	gen_random_uuid()
+public	patients	clinic_name	2	text	text	NO	null
+public	patients	first_name	3	text	text	NO	null
+public	patients	last_name	4	text	text	NO	null
+public	patients	full_name	5	text	text	NO	null
+public	patients	phone_number	6	text	text	NO	null
+public	patients	email	7	text	text	YES	null
+public	patients	date_of_birth	8	date	date	YES	null
+public	patients	preferred_contact_method	9	text	text	YES	null
+public	patients	preferred_dentist	10	text	text	YES	null
+public	patients	notes	11	text	text	YES	null
+public	patients	status	12	text	text	NO	'new'::text
+public	patients	total_appointments	13	integer	int4	NO	0
+public	patients	last_appointment_date	14	date	date	YES	null
+public	patients	last_call_date	15	timestamp with time zone	timestamptz	YES	null
+public	patients	created_at	16	timestamp with time zone	timestamptz	NO	now()
+public	patients	updated_at	17	timestamp with time zone	timestamptz	NO	now()
+public	profiles	id	1	uuid	uuid	NO	null
+public	profiles	clinic_id	2	uuid	uuid	YES	null
+public	profiles	full_name	3	text	text	NO	null
+public	profiles	role	4	text	text	NO	null
+public	profiles	created_at	5	timestamp with time zone	timestamptz	YES	now()
+public	profiles	updated_at	6	timestamp with time zone	timestamptz	YES	now()

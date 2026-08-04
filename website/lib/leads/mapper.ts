@@ -7,9 +7,11 @@ import type {
  * Maps a CreateLeadRequest into a Supabase row.
  */
 export function toDatabaseLead(
-  lead: CreateLeadRequest
+  lead: CreateLeadRequest,
+  clinicId: string,
 ) {
   return {
+    clinic_id: clinicId,
     clinic_name: lead.clinicName,
     dentist_name: lead.dentistName,
     email: lead.email,

@@ -1,0 +1,2 @@
+schema_name	table_name	constraint_name	constraint_definition
+public	call_summaries	call_summaries_outcome_check	CHECK ((outcome = ANY (ARRAY['appointment_created'::text, 'appointment_requested'::text, 'rescheduled'::text, 'cancelled'::text, 'information_only'::text, 'transferred'::text, 'incomplete'::text, 'unknown'::text])))

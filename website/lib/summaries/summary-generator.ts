@@ -53,7 +53,6 @@ export function generateSummary(
     callSid: callId,
 
     clinicName:
-      appointment?.clinicName ??
       patient?.clinicName ??
       "PatientPilot Demo Clinic",
 
@@ -62,7 +61,7 @@ export function generateSummary(
       appointmentData?.patientName,
 
     phoneNumber:
-      appointment?.phoneNumber ??
+      appointment?.phone ??
       appointmentData?.phoneNumber,
 
     intent:
@@ -139,7 +138,7 @@ function buildSummary(
   if (appointment) {
     return [
       `Appointment created for ${appointment.patientName}.`,
-      `Reason: ${appointment.reason}.`,
+      `Service: ${appointment.service}.`,
       `Requested: ${appointmentDate ?? "Unknown"} at ${appointmentTime ?? "Unknown"}.`,
     ].join(" ");
   }

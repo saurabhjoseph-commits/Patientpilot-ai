@@ -10,6 +10,7 @@ import type {
   AICompletionResult,
   AIConversationSession,
 } from "@/lib/ai/types";
+import type { ClinicScope } from "@/lib/clinic/clinic-scope";
 
 /**
  * ============================================================
@@ -33,6 +34,7 @@ export interface AppointmentIntegrationResult {
 export async function syncAppointment(
   session: AIConversationSession,
   result: AICompletionResult,
+  scope: ClinicScope,
 ): Promise<AppointmentIntegrationResult> {
 
   /**
@@ -112,23 +114,20 @@ export async function syncAppointment(
    */
   const createdAppointment =
     await createAppointmentService({
-      clinicName:
-        "PatientPilot Demo Clinic",
-
+      clinicId: scope.clinicId,
       patientName:
         appointment.patientName,
 
-      phoneNumber:
+      phone:
         appointment.phoneNumber,
 
       appointmentDate,
 
       appointmentTime,
 
-      reason:
+      // Conversation reason is the requested appointment service.
+      service:
         appointment.reason,
-
-      callSid: callId,
     });
 
   processedCalls.add(callId);
