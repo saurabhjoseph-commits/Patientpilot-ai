@@ -1,14 +1,18 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { bootstrapInfrastructure } from "@/lib/infrastructure/dependency-injection/bootstrap";
 import { createIdentityAuthenticationService } from "@/lib/infrastructure/identity/IdentityUseCaseFactory";
+import { getCompatibilityIdentity } from "@/lib/infrastructure/identity/SupabaseAuthCompatibilityAdapter";
 
 export async function proxy(request: NextRequest) {
   const accessToken = request.cookies.get("pp_access_token")?.value;
   const refreshToken = request.cookies.get("pp_refresh_token")?.value;
   const isApi = request.nextUrl.pathname.startsWith("/api/");
-  if (!accessToken || !refreshToken) return unauthenticated(request, isApi);
-  bootstrapInfrastructure();
-  const identity = await createIdentityAuthenticationService().validate(accessToken, refreshToken);
+  let identity = null;
+  if (accessToken && refreshToken) {
+    bootstrapInfrastructure();
+    identity = await createIdentityAuthenticationService().validate(accessToken, refreshToken);
+  }
+  identity ??= await getCompatibilityIdentity(request);
   if (!identity) return unauthenticated(request, isApi);
   const headers = new Headers(request.headers);
   headers.set("x-identity-user-id", identity.userId);
