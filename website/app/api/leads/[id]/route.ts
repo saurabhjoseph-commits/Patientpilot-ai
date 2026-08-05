@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import {
   apiHandler,
@@ -6,6 +6,9 @@ import {
 } from "@/lib/core/api";
 
 import { leadService } from "@/lib/leads/service";
+import { resolveAdminClinic } from "@/lib/clinic/clinic-scope";
+import { getAuthorizationContext, hasPermission } from "@/lib/infrastructure/identity/AuthorizationContext";
+import { Permissions } from "@/lib/platform/domain/identity";
 
 interface RouteContext {
   params: Promise<{
@@ -22,12 +25,16 @@ export const PATCH = apiHandler(
     request: NextRequest,
     { params }: RouteContext
   ) => {
+    const authorization = getAuthorizationContext(request);
+    if (!authorization) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!hasPermission(authorization, Permissions.LeadsUpdate)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     const { id } = await params;
     const { status } = await request.json();
 
     const lead = await leadService.updateStatus(
       Number(id),
-      status
+      status,
+      resolveAdminClinic(authorization),
     );
 
     return success({
@@ -42,12 +49,15 @@ export const PATCH = apiHandler(
  */
 export const DELETE = apiHandler(
   async (
-    _request: NextRequest,
+    request: NextRequest,
     { params }: RouteContext
   ) => {
+    const authorization = getAuthorizationContext(request);
+    if (!authorization) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!hasPermission(authorization, Permissions.LeadsDelete)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     const { id } = await params;
 
-    await leadService.delete(Number(id));
+    await leadService.delete(Number(id), resolveAdminClinic(authorization));
 
     return success(
       null,

@@ -1,0 +1,11 @@
+table_schema	table_name	constraint_name	column_name	foreign_table_name	foreign_column_name	update_rule	delete_rule
+public	ai_actions	ai_actions_call_id_fkey	call_id	calls	id	NO ACTION	NO ACTION
+public	appointments	appointments_clinic_id_fkey	clinic_id	clinics	id	NO ACTION	NO ACTION
+public	call_messages	call_messages_call_id_fkey	call_id	calls	id	NO ACTION	CASCADE
+public	call_messages	call_messages_clinic_id_fkey	clinic_id	clinics	id	NO ACTION	NO ACTION
+public	call_summaries	call_summaries_patient_id_fkey	patient_id	patients	id	NO ACTION	SET NULL
+public	calls	calls_clinic_id_fkey	clinic_id	clinics	id	NO ACTION	NO ACTION
+public	clinic_settings	clinic_settings_clinic_id_fkey	clinic_id	clinics	id	NO ACTION	CASCADE
+public	contacts	contacts_clinic_id_fkey	clinic_id	clinics	id	NO ACTION	NO ACTION
+public	lead_activity	lead_activity_lead_id_fkey	lead_id	contacts	id	NO ACTION	CASCADE
+public	profiles	profiles_clinic_id_fkey	clinic_id	clinics	id	NO ACTION	CASCADE

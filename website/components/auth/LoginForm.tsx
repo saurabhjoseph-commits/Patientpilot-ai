@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-import { signIn } from "@/lib/auth";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -22,10 +21,21 @@ export default function LoginForm() {
     setLoading(true);
     setError("");
 
-    const { error } = await signIn(email, password);
+    const response = await fetch("/api/auth/sign-in", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
 
-    if (error) {
-      setError(error.message);
+    if (!response.ok) {
+      const result: unknown = await response.json();
+      const message =
+        result &&
+        typeof result === "object" &&
+        typeof (result as { error?: unknown }).error === "string"
+          ? (result as { error: string }).error
+          : "Unable to sign in.";
+      setError(message);
       setLoading(false);
       return;
     }

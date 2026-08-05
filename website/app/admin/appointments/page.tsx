@@ -1,9 +1,14 @@
 import { supabaseServer } from "@/lib/supabase-server";
+import { ResponsiveTable } from "@/components/ui/responsive";
+import { requireAdminPagePermission } from "@/lib/auth-server";
+import { Permissions } from "@/lib/platform/domain/identity";
 
 export default async function AppointmentsPage() {
+  const identity = await requireAdminPagePermission(Permissions.AppointmentsRead);
   const { data: appointments } = await supabaseServer
     .from("appointments")
     .select("*")
+    .eq("clinic_id", identity.clinicId)
     .order("created_at", { ascending: false });
 
   return (
@@ -18,15 +23,16 @@ export default async function AppointmentsPage() {
         </p>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border bg-white shadow">
-        <table className="w-full">
+      <div className="rounded-2xl border bg-white shadow">
+        <ResponsiveTable>
+        <table className="min-w-[640px] w-full">
           <thead className="bg-slate-900 text-white">
             <tr>
-              <th className="p-4 text-left">
+              <th className="hidden p-4 text-left sm:table-cell">
                 Patient
               </th>
 
-              <th className="p-4 text-left">
+              <th className="hidden p-4 text-left md:table-cell">
                 Phone
               </th>
 
@@ -58,11 +64,11 @@ export default async function AppointmentsPage() {
                 key={appointment.id}
                 className="border-b"
               >
-                <td className="p-4">
+                <td className="hidden p-4 sm:table-cell">
                   {appointment.patient_name}
                 </td>
 
-                <td className="p-4">
+                <td className="hidden p-4 md:table-cell">
                   {appointment.phone}
                 </td>
 
@@ -93,6 +99,7 @@ export default async function AppointmentsPage() {
             ))}
           </tbody>
         </table>
+        </ResponsiveTable>
 
         {appointments?.length === 0 && (
           <div className="p-10 text-center text-slate-500">

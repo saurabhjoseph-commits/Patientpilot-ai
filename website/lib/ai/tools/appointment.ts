@@ -14,14 +14,18 @@ import type {
 } from "./types";
 
 export async function createAppointmentTool(
-  input: CreateAppointmentInput,
+  input: Omit<CreateAppointmentInput, "clinicId">,
   context: ToolContext,
 ): Promise<ToolResult> {
+
+  if (!context.clinicScope) {
+    throw new Error("AI workflow is missing a trusted clinic scope.");
+  }
 
   const appointment =
     await createAppointmentService({
       ...input,
-      callSid: context.callId,
+      clinicId: context.clinicScope.clinicId,
     });
 
   return {

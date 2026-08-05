@@ -525,3 +525,35 @@ Be fully documented
 ---
 
 END
+
+## J.3 telephony production gate
+
+Before enabling Twilio callbacks, configure `TWILIO_AUTH_TOKEN` and `TWILIO_WEBHOOK_BASE_URL` with the exact HTTPS public origin configured in Twilio. Keep `SUPABASE_SERVICE_ROLE_KEY` server-only. Apply the reviewable `0008_j3_webhook_deliveries.sql` migration before deploying the durable claim service. Deploy the signed webhook routes before pointing Twilio at them, then verify a valid callback, invalid-signature rejection, an unmapped destination rejection, and duplicate-delivery acknowledgement. Schedule `POST /api/internal/webhook-deliveries/cleanup` with `Authorization: Bearer ${WEBHOOK_CLEANUP_CRON_SECRET}` at least daily; it removes records after seven days.
+
+## Password recovery configuration
+
+Set `NEXT_PUBLIC_APP_URL` to an origin only: local development may use `http://localhost:3000`; staging and production must use HTTPS. Set Supabase Auth **Site URL** to the corresponding public application origin and add `http://localhost:3000/auth/callback`, `<staging-origin>/auth/callback`, and `https://patientpilot-ai.com/auth/callback` to Supabase Auth **Redirect URLs**.
+
+In Supabase Auth **Email Templates → Reset Password**, use this exact link (do not replace it with `{{ .SiteURL }}` alone or a bare `/auth/v1/verify` URL):
+
+```html
+<!doctype html>
+<html lang="en">
+  <body>
+    <p>We received a request to reset your PatientPilot password.</p>
+    <p>
+      <a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&amp;type=recovery&amp;next=/reset-password">Reset your password</a>
+    </p>
+    <p>If you did not request a password reset, you can safely ignore this email.</p>
+  </body>
+</html>
+```
+
+Configure custom SMTP before production: a verified sender name/address, the recovery template above, and appropriate rate limits. Supabase's default email service is intended for limited development use and is not a production delivery guarantee. Never commit SMTP or Supabase credentials.
+
+Password recovery requires each Supabase Auth user's email to match one Identity `users.email` record with a password credential. Validate that mapping in staging before enabling recovery. The completion route verifies the short-lived Supabase recovery access token server-side before updating the Identity password hash.
+# Clinic scope prerequisites
+
+Before applying the J.2 ownership and RLS migrations, set `PUBLIC_INTAKE_CLINIC_ID` to the UUID of the intentionally configured public-intake clinic. Do not use a name or slug as an ownership identifier. Configure `TELEPHONY_CLINIC_PHONE_MAP` as JSON mapping trusted destination phone numbers to clinic UUIDs before enabling telephony workflows.
+
+Public requests never provide a trusted clinic identifier. Admin requests receive scope from the validated Identity context, while telephony workflows resolve scope only from server-side configuration. Apply the database migrations only after the application deployment and the clinic-scope tests have passed.

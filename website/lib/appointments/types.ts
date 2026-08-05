@@ -1,117 +1,58 @@
-/**
- * ============================================================
- * PatientPilot AI
- * Appointment Types
- * ============================================================
- */
-
-export type AppointmentStatus =
-  | "pending"
-  | "confirmed"
-  | "completed"
-  | "cancelled"
-  | "rescheduled";
+/** Canonical application contract aligned with public.appointments. */
+export type AppointmentStatus = string;
 
 export interface Appointment {
-  id: string;
-
-  clinicName: string;
-
-  patientName: string;
-
-  phoneNumber: string;
-
-  appointmentDate: string;
-
-  appointmentTime: string;
-
-  reason: string;
-
-  status: AppointmentStatus;
-
-  callSid?: string;
-
-  leadId?: string;
-
-  notes?: string;
-
-  createdAt: string;
-
-  updatedAt: string;
+  readonly id: string;
+  readonly clinicId: string;
+  readonly patientName: string;
+  readonly phone: string | null;
+  readonly email: string | null;
+  readonly service: string;
+  readonly appointmentDate: string;
+  readonly appointmentTime: string;
+  readonly status: AppointmentStatus;
+  readonly source: string;
+  readonly notes: string | null;
+  readonly createdAt: string;
 }
 
-/**
- * Data required to create a new appointment.
- */
 export interface CreateAppointmentInput {
-  clinicName: string;
-
-  patientName: string;
-
-  phoneNumber: string;
-
-  appointmentDate: string;
-
-  appointmentTime: string;
-
-  reason: string;
-
-  callSid?: string;
-
-  leadId?: string;
-
-  notes?: string;
+  readonly clinicId: string;
+  readonly patientName: string;
+  readonly phone: string;
+  readonly email?: string;
+  readonly service: string;
+  readonly appointmentDate: string;
+  readonly appointmentTime: string;
+  readonly notes?: string;
+  readonly source?: string;
 }
 
-/**
- * Data that may be updated later.
- */
 export interface UpdateAppointmentInput {
-  patientName?: string;
-
-  phoneNumber?: string;
-
-  appointmentDate?: string;
-
-  appointmentTime?: string;
-
-  reason?: string;
-
-  status?: AppointmentStatus;
-
-  notes?: string;
-
-  leadId?: string;
+  readonly patientName?: string;
+  readonly phone?: string;
+  readonly email?: string;
+  readonly service?: string;
+  readonly appointmentDate?: string;
+  readonly appointmentTime?: string;
+  readonly status?: AppointmentStatus;
+  readonly source?: string;
+  readonly notes?: string;
 }
 
-/**
- * Appointment search filters.
- */
 export interface AppointmentFilters {
-  status?: AppointmentStatus;
-
-  appointmentDate?: string;
-
-  clinicName?: string;
-
-  patientName?: string;
-
-  phoneNumber?: string;
+  readonly clinicId: string;
+  readonly status?: AppointmentStatus;
+  readonly appointmentDate?: string;
+  readonly patientName?: string;
+  readonly phone?: string;
 }
 
-/**
- * Dashboard statistics.
- */
 export interface AppointmentStats {
-  total: number;
-
-  pending: number;
-
-  confirmed: number;
-
-  completed: number;
-
-  cancelled: number;
-
-  rescheduled: number;
+  readonly total: number;
+  readonly pending: number;
+  readonly confirmed: number;
+  readonly completed: number;
+  readonly cancelled: number;
+  readonly rescheduled: number;
 }

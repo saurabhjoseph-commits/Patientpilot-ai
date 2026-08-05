@@ -1,0 +1,101 @@
+table_schema	table_name	column_name	ordinal_position	data_type	udt_name	is_nullable	column_default
+public	ai_actions	id	1	uuid	uuid	NO	gen_random_uuid()
+public	ai_actions	call_id	2	uuid	uuid	YES	null
+public	ai_actions	action	3	text	text	YES	null
+public	ai_actions	details	4	text	text	YES	null
+public	ai_actions	created_at	5	timestamp with time zone	timestamptz	YES	now()
+public	appointments	id	1	uuid	uuid	NO	gen_random_uuid()
+public	appointments	created_at	2	timestamp with time zone	timestamptz	NO	now()
+public	appointments	patient_name	3	text	text	NO	null
+public	appointments	phone	4	text	text	YES	null
+public	appointments	email	5	text	text	YES	null
+public	appointments	service	6	text	text	NO	null
+public	appointments	appointment_date	7	text	text	NO	null
+public	appointments	appointment_time	8	text	text	NO	null
+public	appointments	status	9	text	text	NO	'Booked'::text
+public	appointments	source	10	text	text	NO	'AI Receptionist'::text
+public	appointments	notes	11	text	text	YES	null
+public	appointments	clinic_id	12	uuid	uuid	YES	null
+public	call_messages	id	1	uuid	uuid	NO	gen_random_uuid()
+public	call_messages	call_id	2	uuid	uuid	YES	null
+public	call_messages	sender	3	text	text	NO	null
+public	call_messages	message	4	text	text	NO	null
+public	call_messages	created_at	5	timestamp with time zone	timestamptz	YES	now()
+public	call_messages	clinic_id	6	uuid	uuid	YES	null
+public	call_summaries	id	1	uuid	uuid	NO	gen_random_uuid()
+public	call_summaries	call_sid	2	text	text	NO	null
+public	call_summaries	clinic_name	3	text	text	NO	null
+public	call_summaries	patient_name	4	text	text	YES	null
+public	call_summaries	phone_number	5	text	text	YES	null
+public	call_summaries	intent	6	text	text	NO	null
+public	call_summaries	outcome	7	text	text	NO	null
+public	call_summaries	summary	8	text	text	NO	null
+public	call_summaries	action_items	9	jsonb	jsonb	NO	'[]'::jsonb
+public	call_summaries	appointment_id	10	uuid	uuid	YES	null
+public	call_summaries	patient_id	11	uuid	uuid	YES	null
+public	call_summaries	confidence	12	numeric	numeric	NO	0.95
+public	call_summaries	duration_seconds	13	integer	int4	YES	null
+public	call_summaries	created_at	14	timestamp with time zone	timestamptz	NO	now()
+public	call_summaries	updated_at	15	timestamp with time zone	timestamptz	NO	now()
+public	calls	id	1	uuid	uuid	NO	gen_random_uuid()
+public	calls	call_sid	2	text	text	YES	null
+public	calls	patient_name	3	text	text	YES	null
+public	calls	phone	4	text	text	NO	null
+public	calls	status	5	text	text	YES	'ringing'::text
+public	calls	ai_state	6	text	text	YES	'listening'::text
+public	calls	started_at	7	timestamp with time zone	timestamptz	YES	null
+public	calls	answered_at	8	timestamp with time zone	timestamptz	YES	null
+public	calls	ended_at	9	timestamp with time zone	timestamptz	YES	null
+public	calls	duration_seconds	10	integer	int4	YES	0
+public	calls	recording_url	11	text	text	YES	null
+public	calls	transcript_summary	12	text	text	YES	null
+public	calls	created_at	13	timestamp with time zone	timestamptz	YES	now()
+public	calls	updated_at	14	timestamp with time zone	timestamptz	YES	now()
+public	calls	clinic_id	15	uuid	uuid	YES	null
+public	clinic_settings	id	1	uuid	uuid	NO	gen_random_uuid()
+public	clinic_settings	clinic_id	2	uuid	uuid	YES	null
+public	clinic_settings	ai_name	3	text	text	YES	'Sarah'::text
+public	clinic_settings	greeting	4	text	text	YES	null
+public	clinic_settings	office_hours	5	jsonb	jsonb	YES	null
+public	clinic_settings	services	6	jsonb	jsonb	YES	null
+public	clinic_settings	faq	7	jsonb	jsonb	YES	null
+public	clinic_settings	emergency_rules	8	jsonb	jsonb	YES	null
+public	clinic_settings	scheduling_rules	9	jsonb	jsonb	YES	null
+public	clinic_settings	voice	10	text	text	YES	'alloy'::text
+public	clinic_settings	language	11	text	text	YES	'en'::text
+public	clinic_settings	created_at	12	timestamp with time zone	timestamptz	YES	now()
+public	clinic_settings	updated_at	13	timestamp with time zone	timestamptz	YES	now()
+public	clinics	id	1	uuid	uuid	NO	gen_random_uuid()
+public	clinics	name	2	text	text	NO	null
+public	clinics	slug	3	text	text	NO	null
+public	clinics	email	4	text	text	YES	null
+public	clinics	phone	5	text	text	YES	null
+public	clinics	website	6	text	text	YES	null
+public	clinics	address	7	text	text	YES	null
+public	clinics	city	8	text	text	YES	null
+public	clinics	state	9	text	text	YES	null
+public	clinics	country	10	text	text	YES	null
+public	clinics	timezone	11	text	text	YES	'America/Chicago'::text
+public	clinics	logo_url	12	text	text	YES	null
+public	clinics	created_at	13	timestamp with time zone	timestamptz	YES	now()
+public	clinics	updated_at	14	timestamp with time zone	timestamptz	YES	now()
+public	contacts	id	1	bigint	int8	NO	null
+public	contacts	clinic_name	2	text	text	NO	null
+public	contacts	dentist_name	3	text	text	NO	null
+public	contacts	email	4	text	text	NO	null
+public	contacts	phone	5	text	text	NO	null
+public	contacts	monthly_calls	6	text	text	YES	null
+public	contacts	message	7	text	text	YES	null
+public	contacts	status	8	text	text	YES	'New'::text
+public	contacts	created_at	9	timestamp with time zone	timestamptz	YES	now()
+public	contacts	clinic_id	10	uuid	uuid	YES	null
+public	contacts	notes	11	text	text	YES	null
+public	contacts	contacted_at	12	timestamp with time zone	timestamptz	YES	null
+public	contacts	demo_date	13	timestamp with time zone	timestamptz	YES	null
+public	contacts	converted	14	boolean	bool	YES	FALSE
+public	contacts	updated_at	15	timestamp with time zone	timestamptz	YES	now()
+public	lead_activity	id	1	bigint	int8	NO	nextval('lead_activity_id_seq'::regclass)
+public	lead_activity	lead_id	2	bigint	int8	NO	null
+public	lead_activity	type	3	text	text	NO	null
+public	lead_activity	description	4	text	text	NO	null
+public	lead_activity	created_at	5	timestamp with time zone	timestamptz	YES	now()

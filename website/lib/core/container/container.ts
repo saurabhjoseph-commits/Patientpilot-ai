@@ -1,34 +1,154 @@
-import { ServiceContainer, ServiceFactory } from "./types";
-import { ServiceNotFoundError } from "./exceptions";
+/**
+ * ============================================================
+ * PatientPilot AI
+ * Global AI Front Office Manager
+ *
+ * Dependency Injection Container
+ * ============================================================
+ */
 
-class DefaultContainer implements ServiceContainer {
-  private readonly services = new Map<symbol, unknown>();
+import { ConfigurationError } from "../errors/ConfigurationError";
 
-  register<T>(token: symbol, factory: ServiceFactory<T>): void {
-    this.services.set(token, factory());
-  }
+import {
+  ServiceProvider,
+  ServiceLifetime,
+} from "./ServiceProvider";
 
-  registerSingleton<T>(token: symbol, instance: T): void {
-    this.services.set(token, instance);
-  }
+import { ServiceToken } from "./ServiceToken";
 
-  resolve<T>(token: symbol): T {
-    const service = this.services.get(token);
+/**
+ * Dependency Injection Container.
+ *
+ * Supports:
+ * - Singleton services
+ * - Transient services
+ * - Lazy initialization
+ * - Type-safe resolution
+ */
+export class Container {
+  /**
+   * Registered providers.
+   */
+  private readonly providers = new Map<
+    ServiceToken<unknown>,
+    ServiceProvider<unknown>
+  >();
 
-    if (!service) {
-      throw new ServiceNotFoundError(token.toString());
+  /**
+   * Singleton cache.
+   */
+  private readonly singletons = new Map<
+    ServiceToken<unknown>,
+    unknown
+  >();
+
+  /**
+   * Register a service provider.
+   */
+  register<T>(
+    provider: ServiceProvider<T>
+  ): void {
+    if (this.providers.has(provider.token)) {
+      throw new ConfigurationError(
+        `Service already registered: ${provider.token}`
+      );
     }
 
-    return service as T;
+    this.providers.set(
+      provider.token,
+      provider as ServiceProvider<unknown>
+    );
   }
 
-  has(token: symbol): boolean {
-    return this.services.has(token);
+  /**
+   * Resolve a service.
+   */
+  resolve<T>(
+    token: ServiceToken<T>
+  ): T {
+    const provider = this.providers.get(
+      token
+    ) as ServiceProvider<T> | undefined;
+
+    if (!provider) {
+      throw new ConfigurationError(
+        `Service not registered: ${token}`
+      );
+    }
+
+    switch (provider.lifetime) {
+      case ServiceLifetime.Singleton:
+        return this.resolveSingleton(provider);
+
+      case ServiceLifetime.Transient:
+        return provider.factory(this);
+
+      default:
+        throw new ConfigurationError(
+          `Unsupported service lifetime: ${provider.lifetime}`
+        );
+    }
   }
 
+  /**
+   * Resolve singleton instance.
+   */
+  private resolveSingleton<T>(
+    provider: ServiceProvider<T>
+  ): T {
+    const cached = this.singletons.get(
+      provider.token
+    );
+
+    if (cached) {
+      return cached as T;
+    }
+
+    const instance = provider.factory(this);
+
+    this.singletons.set(
+      provider.token,
+      instance
+    );
+
+    return instance;
+  }
+
+  /**
+   * Returns true if a provider exists.
+   */
+  has(
+    token: ServiceToken<unknown>
+  ): boolean {
+    return this.providers.has(token);
+  }
+
+  /**
+   * Removes every registration.
+   *
+   * Intended for tests.
+   */
   clear(): void {
-    this.services.clear();
+    this.providers.clear();
+    this.singletons.clear();
+  }
+
+  /**
+   * Number of registered services.
+   */
+  size(): number {
+    return this.providers.size;
+  }
+
+  /**
+   * Returns all registered tokens.
+   */
+  tokens(): readonly ServiceToken<unknown>[] {
+    return [...this.providers.keys()];
   }
 }
 
-export const container = new DefaultContainer();
+/**
+ * Global application container.
+ */
+export const container = new Container();

@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { createAppointmentService } from "@/lib/appointments/service";
 import { listAppointmentsService } from "@/lib/appointments/service";
+import { resolveAdminClinic } from "@/lib/clinic/clinic-scope";
+import { requirePermission } from "@/lib/infrastructure/identity/AuthorizationContext";
+import { Permissions } from "@/lib/platform/domain/identity";
 
 /**
  * ============================================================
@@ -14,10 +17,12 @@ import { listAppointmentsService } from "@/lib/appointments/service";
  * GET /api/appointments
  * Returns appointments.
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const authorization = requirePermission(request, Permissions.AppointmentsRead);
+  if (authorization instanceof Response) return authorization;
   try {
     const appointments =
-      await listAppointmentsService();
+      await listAppointmentsService({ clinicId: resolveAdminClinic(authorization).clinicId });
 
     return NextResponse.json({
       success: true,
@@ -45,44 +50,26 @@ export async function GET() {
 export async function POST(
   request: NextRequest
 ) {
+  const authorization = requirePermission(request, Permissions.AppointmentsCreate);
+  if (authorization instanceof Response) return authorization;
   try {
     const body = await request.json();
 
-    const {
-      call_id,
-      patient_name,
-      phone,
-      appointment_type,
-      dentist,
-      appointment_date,
-      appointment_time,
-    } = body;
+    const input = body as Record<string, unknown>;
+    const readString = (value: unknown): string | undefined =>
+      typeof value === "string" && value.trim().length > 0 ? value : undefined;
 
     const appointment =
       await createAppointmentService({
-        clinicName:
-          dentist ??
-          "PatientPilot Demo Clinic",
-
-        patientName:
-          patient_name,
-
-        phoneNumber:
-          phone,
-
-        appointmentDate:
-          appointment_date,
-
-        appointmentTime:
-          appointment_time,
-
-        reason:
-          appointment_type,
-
-        callSid:
-          call_id,
-
-        notes: "",
+        clinicId: resolveAdminClinic(authorization).clinicId,
+        patientName: readString(input.patient_name) ?? readString(input.patientName) ?? "",
+        phone: readString(input.phone) ?? "",
+        email: readString(input.email),
+        appointmentDate: readString(input.appointment_date) ?? readString(input.appointmentDate) ?? "",
+        appointmentTime: readString(input.appointment_time) ?? readString(input.appointmentTime) ?? "",
+        // The historical appointment_type/reason request fields mean the requested service.
+        service: readString(input.appointment_type) ?? readString(input.service) ?? readString(input.reason) ?? "",
+        notes: readString(input.notes),
       });
 
     return NextResponse.json(

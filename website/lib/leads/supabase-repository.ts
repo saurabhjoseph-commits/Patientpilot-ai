@@ -9,6 +9,7 @@ import type {
   Lead,
   CreateLeadRequest,
 } from "./types";
+import type { ClinicScope } from "@/lib/clinic/clinic-scope";
 
 const TABLE = "contacts";
 
@@ -16,9 +17,10 @@ const TABLE = "contacts";
  * Creates a new lead.
  */
 export async function createLead(
-  input: CreateLeadRequest
+  input: CreateLeadRequest,
+  scope: ClinicScope,
 ): Promise<Lead> {
-  const payload = toDatabaseLead(input);
+  const payload = toDatabaseLead(input, scope.clinicId);
 
   const { data, error } = await supabaseServer
     .from(TABLE)
@@ -38,7 +40,8 @@ export async function createLead(
  */
 export async function updateLeadStatus(
   id: number,
-  status: string
+  status: string,
+  scope: ClinicScope,
 ): Promise<Lead> {
   const { data, error } = await supabaseServer
     .from(TABLE)
@@ -47,6 +50,7 @@ export async function updateLeadStatus(
       updated_at: new Date().toISOString(),
     })
     .eq("id", id)
+    .eq("clinic_id", scope.clinicId)
     .select()
     .single();
 
@@ -61,12 +65,14 @@ export async function updateLeadStatus(
  * Deletes a lead.
  */
 export async function deleteLead(
-  id: number
+  id: number,
+  scope: ClinicScope,
 ): Promise<void> {
   const { error } = await supabaseServer
     .from(TABLE)
     .delete()
-    .eq("id", id);
+    .eq("id", id)
+    .eq("clinic_id", scope.clinicId);
 
   if (error) {
     throw error;

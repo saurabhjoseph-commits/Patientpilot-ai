@@ -8,6 +8,10 @@ import {
 import {
   executeConversationWorkflow,
 } from "@/lib/workflows/conversation-workflow";
+import { ClinicResolutionError, resolveTelephonyClinic } from "@/lib/clinic/clinic-scope";
+import { verifyTwilioWebhook } from "@/lib/telephony/twilio-webhook-security";
+import { getWebhookDeliveryExpiry } from "@/lib/telephony/twilio-webhook-security";
+import { createWebhookDeliveryService } from "@/lib/telephony/webhook-delivery-service";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,28 +29,33 @@ export const dynamic = "force-dynamic";
  * - Return TwiML
  */
 export async function POST(req: NextRequest) {
+  let deliveryId: string | undefined;
   try {
-    const formData = await req.formData();
+    const verification = await verifyTwilioWebhook(req);
+    if (!verification.ok) {
+      return NextResponse.json({ error: "Unauthorized webhook." }, { status: verification.status });
+    }
+    const deliveries = createWebhookDeliveryService();
+    const receivedAt = new Date();
+    const claim = await deliveries.claim({
+      provider: "twilio",
+      fingerprint: verification.fingerprint,
+      route: req.nextUrl.pathname,
+      callSid: verification.callSid,
+      receivedAt,
+      expiresAt: getWebhookDeliveryExpiry(receivedAt),
+    });
+    if (!claim.claimed) return emptyTwimlResponse();
+    if (!claim.deliveryId) throw new Error("Webhook delivery claim did not return an identifier.");
+    deliveryId = claim.deliveryId;
+
+    const { formData } = verification;
 
     const callSid = String(formData.get("CallSid") ?? "");
 
     const speechResult = String(
       formData.get("SpeechResult") ?? ""
     ).trim();
-
-    const confidence = String(
-      formData.get("Confidence") ?? ""
-    );
-
-    console.log("==================================");
-    console.log("🦷 PatientPilot AI");
-    console.log("==================================");
-    console.log({
-      callSid,
-      speechResult,
-      confidence,
-    });
-    console.log("==================================");
 
     if (!callSid) {
       return NextResponse.json(
@@ -58,6 +67,8 @@ export async function POST(req: NextRequest) {
         }
       );
     }
+
+    const scope = resolveTelephonyClinic(String(formData.get("To") ?? ""));
 
     // Ensure a session exists.
     startConversation(callSid);
@@ -84,6 +95,7 @@ export async function POST(req: NextRequest) {
         "I'm sorry, I didn't hear anything. Could you please repeat that?"
       );
 
+      await deliveries.markCompleted(deliveryId);
       return new NextResponse(twiml.toString(), {
         headers: {
           "Content-Type": "text/xml",
@@ -97,7 +109,8 @@ export async function POST(req: NextRequest) {
 const workflow =
   await executeConversationWorkflow(
     callSid,
-    speechResult
+    speechResult,
+    scope,
   );
 
 const result = workflow.ai;
@@ -146,6 +159,7 @@ if (workflow.summary) {
 
       twiml.hangup();
 
+      await deliveries.markCompleted(deliveryId);
       return new NextResponse(twiml.toString(), {
         headers: {
           "Content-Type": "text/xml",
@@ -172,16 +186,24 @@ if (workflow.summary) {
       "Please go ahead."
     );
 
+    await deliveries.markCompleted(deliveryId);
     return new NextResponse(twiml.toString(), {
       headers: {
         "Content-Type": "text/xml",
       },
     });
   } catch (error) {
-    console.error(
-      "❌ AI Respond Route Error:",
-      error
-    );
+    if (deliveryId) {
+      try {
+        await createWebhookDeliveryService().markFailed(deliveryId, "ai_response_processing_failed");
+      } catch {
+        console.error("Twilio AI response webhook failure could not be recorded.");
+      }
+    }
+    if (error instanceof ClinicResolutionError) {
+      return NextResponse.json({ error: "Clinic routing is unavailable." }, { status: 503 });
+    }
+    console.error("Twilio AI response webhook failed.");
 
     const twiml = new VoiceResponse();
 
@@ -204,10 +226,20 @@ if (workflow.summary) {
 }
 
 export async function GET() {
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json({ error: "Not found." }, { status: 404 });
+  }
   return NextResponse.json({
     service: "PatientPilot AI",
     endpoint: "/api/ai/respond",
     status: "online",
     timestamp: new Date().toISOString(),
+  });
+}
+
+function emptyTwimlResponse(): NextResponse {
+  return new NextResponse("<?xml version=\"1.0\" encoding=\"UTF-8\"?><Response></Response>", {
+    status: 200,
+    headers: { "Content-Type": "text/xml" },
   });
 }

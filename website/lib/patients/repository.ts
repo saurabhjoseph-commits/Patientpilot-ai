@@ -6,6 +6,11 @@ import type {
   UpdatePatientInput,
   PatientFilters,
 } from "./types";
+import {
+  fromPatientPersistence,
+  toPatientCreatePersistence,
+  toPatientUpdatePersistence,
+} from "./mapper";
 
 /**
  * ============================================================
@@ -28,22 +33,7 @@ export async function createPatient(
 ): Promise<Patient> {
   const { data, error } = await supabaseServer
     .from(TABLE)
-    .insert({
-      clinic_name: input.clinicName,
-      first_name: input.firstName,
-      last_name: input.lastName,
-      full_name: `${input.firstName} ${input.lastName}`,
-      phone_number: input.phoneNumber,
-      email: input.email,
-      date_of_birth: input.dateOfBirth,
-      preferred_contact_method:
-        input.preferredContactMethod,
-      preferred_dentist:
-        input.preferredDentist,
-      notes: input.notes,
-      status: "new",
-      total_appointments: 0,
-    })
+    .insert(toPatientCreatePersistence(input))
     .select()
     .single();
 
@@ -51,7 +41,7 @@ export async function createPatient(
     throw error;
   }
 
-  return mapPatient(data);
+  return fromPatientPersistence(data);
 }
 
 /**
@@ -70,7 +60,7 @@ export async function getPatient(
     throw error;
   }
 
-  return data ? mapPatient(data) : null;
+  return data ? fromPatientPersistence(data) : null;
 }
 
 /**
@@ -89,7 +79,7 @@ export async function findPatientByPhone(
     throw error;
   }
 
-  return data ? mapPatient(data) : null;
+  return data ? fromPatientPersistence(data) : null;
 }
 
 /**
@@ -146,7 +136,7 @@ export async function listPatients(
     throw error;
   }
 
-  return (data ?? []).map(mapPatient);
+  return (data ?? []).map(fromPatientPersistence);
 }
 
 /**
@@ -156,82 +146,10 @@ export async function updatePatient(
   id: string,
   input: UpdatePatientInput
 ): Promise<Patient> {
-  const updates: Record<string, unknown> = {};
-
-  if (input.firstName !== undefined)
-    updates.first_name = input.firstName;
-
-  if (input.lastName !== undefined)
-    updates.last_name = input.lastName;
-
-  if (
-    input.firstName !== undefined ||
-    input.lastName !== undefined
-  ) {
-    updates.full_name = [
-      input.firstName,
-      input.lastName,
-    ]
-      .filter(Boolean)
-      .join(" ");
-  }
-
-  if (input.phoneNumber !== undefined)
-    updates.phone_number =
-      input.phoneNumber;
-
-  if (input.email !== undefined)
-    updates.email = input.email;
-
-  if (input.dateOfBirth !== undefined)
-    updates.date_of_birth =
-      input.dateOfBirth;
-
-  if (
-    input.preferredContactMethod !==
-    undefined
-  ) {
-    updates.preferred_contact_method =
-      input.preferredContactMethod;
-  }
-
-  if (
-    input.preferredDentist !== undefined
-  ) {
-    updates.preferred_dentist =
-      input.preferredDentist;
-  }
-
-  if (input.notes !== undefined)
-    updates.notes = input.notes;
-
-  if (input.status !== undefined)
-    updates.status = input.status;
-
-  if (
-    input.totalAppointments !== undefined
-  ) {
-    updates.total_appointments =
-      input.totalAppointments;
-  }
-
-  if (
-    input.lastAppointmentDate !==
-    undefined
-  ) {
-    updates.last_appointment_date =
-      input.lastAppointmentDate;
-  }
-
-  if (input.lastCallDate !== undefined) {
-    updates.last_call_date =
-      input.lastCallDate;
-  }
-
   const { data, error } =
     await supabaseServer
       .from(TABLE)
-      .update(updates)
+      .update(toPatientUpdatePersistence(input))
       .eq("id", id)
       .select()
       .single();
@@ -240,7 +158,7 @@ export async function updatePatient(
     throw error;
   }
 
-  return mapPatient(data);
+  return fromPatientPersistence(data);
 }
 
 /**
@@ -259,35 +177,3 @@ export async function deletePatient(
   }
 }
 
-/**
- * Convert Supabase row
- * into Patient model.
- */
-function mapPatient(
-  row: any
-): Patient {
-  return {
-    id: row.id,
-    clinicName: row.clinic_name,
-    firstName: row.first_name,
-    lastName: row.last_name,
-    fullName: row.full_name,
-    phoneNumber: row.phone_number,
-    email: row.email,
-    dateOfBirth: row.date_of_birth,
-    preferredContactMethod:
-      row.preferred_contact_method,
-    preferredDentist:
-      row.preferred_dentist,
-    notes: row.notes,
-    status: row.status,
-    totalAppointments:
-      row.total_appointments,
-    lastAppointmentDate:
-      row.last_appointment_date,
-    lastCallDate:
-      row.last_call_date,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-  };
-}

@@ -24,6 +24,12 @@ export const env = {
   TWILIO_PHONE_NUMBER:
     process.env.TWILIO_PHONE_NUMBER ?? "",
 
+  PUBLIC_INTAKE_CLINIC_ID:
+    process.env.PUBLIC_INTAKE_CLINIC_ID ?? "",
+
+  TELEPHONY_CLINIC_PHONE_MAP:
+    process.env.TELEPHONY_CLINIC_PHONE_MAP ?? "",
+
   NODE_ENV:
     process.env.NODE_ENV ?? "development",
 };

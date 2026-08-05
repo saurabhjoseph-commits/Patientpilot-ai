@@ -21,11 +21,11 @@ import type {
 
 export async function createLeadTool(
   input: CreateLeadRequest,
-  _context: ToolContext,
+  context: ToolContext,
 ): Promise<ToolResult> {
 
   const lead =
-    await leadService.bookDemo(input);
+    await leadService.bookDemo(input, requireClinicScope(context));
 
   return {
     success: true,
@@ -35,4 +35,11 @@ export async function createLeadTool(
     message:
       "Lead created successfully.",
   };
+}
+
+function requireClinicScope(context: ToolContext) {
+  if (!context.clinicScope) {
+    throw new Error("AI workflow is missing a trusted clinic scope.");
+  }
+  return context.clinicScope;
 }

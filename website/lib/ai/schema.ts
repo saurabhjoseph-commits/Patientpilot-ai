@@ -11,6 +11,8 @@
 export const conversationResponseSchema = {
   name: "patientpilot_conversation",
 
+  strict: true,
+
   schema: {
     type: "object",
 
@@ -130,62 +132,76 @@ export const conversationResponseSchema = {
       },
 
       appointment: {
-        type: "object",
+        type: ["object", "null"],
 
         additionalProperties: false,
 
         properties: {
           patientName: {
-            type: "string",
+            type: ["string", "null"],
           },
 
           phoneNumber: {
-            type: "string",
+            type: ["string", "null"],
           },
 
           email: {
-            type: "string",
+            type: ["string", "null"],
           },
 
           procedure: {
-            type: "string",
+            type: ["string", "null"],
           },
 
           reason: {
-            type: "string",
+            type: ["string", "null"],
           },
 
           dentist: {
-            type: "string",
+            type: ["string", "null"],
           },
 
           insurance: {
-            type: "string",
+            type: ["string", "null"],
           },
 
           preferredDate: {
-            type: "string",
+            type: ["string", "null"],
           },
 
           preferredTime: {
-            type: "string",
+            type: ["string", "null"],
           },
 
           confirmed: {
-            type: "boolean",
+            type: ["boolean", "null"],
           },
         },
+
+        required: [
+          "patientName",
+          "phoneNumber",
+          "email",
+          "procedure",
+          "reason",
+          "dentist",
+          "insurance",
+          "preferredDate",
+          "preferredTime",
+          "confirmed",
+        ],
       },
     },
 
     required: [
-      "message",
-      "speech",
-      "intent",
-      "confidence",
-      "analysis",
-      "actions",
-      "shouldHangup",
-    ],
+  "message",
+  "speech",
+  "intent",
+  "confidence",
+  "shouldHangup",
+  "actions",
+  "analysis",
+  "appointment",
+],
   },
 } as const;

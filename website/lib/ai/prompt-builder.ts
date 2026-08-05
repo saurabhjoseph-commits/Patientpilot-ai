@@ -1,126 +1,63 @@
-import type {
-  AIConversationSession,
-  AppointmentData,
-} from "./types";
-
 /**
- * ============================================================
  * PatientPilot AI
- * Prompt Builder
- * ============================================================
+ * AI Prompt Builder
+ *
+ * Responsible for constructing consistent prompts
+ * for all AI interactions.
  */
 
-const CLINIC_NAME =
-  process.env.NEXT_PUBLIC_CLINIC_NAME ??
-  "PatientPilot Dental";
+import type {
+  ChatMessage,
+} from "../infrastructure/providers/openai/openai-provider";
 
-const DEFAULT_SYSTEM_PROMPT = `
-You are PatientPilot AI.
+export interface PromptContext {
+  readonly clinicName?: string;
+  readonly patientName?: string;
+  readonly conversationType?: string;
+}
 
-You are a professional, friendly, and empathetic AI receptionist
-working for a dental clinic in the United States.
+export class PromptBuilder {
+  buildSystemPrompt(
+    context: PromptContext = {},
+  ): ChatMessage {
+    const clinic =
+      context.clinicName ??
+      "the dental clinic";
 
-Your responsibilities are:
+    return {
+      role: "system",
+      content: [
+        "You are PatientPilot AI.",
+        "You are a professional AI Front Office Manager.",
+        `You represent ${clinic}.`,
+        "Always be friendly, empathetic, and professional.",
+        "Collect missing information before answering.",
+        "Never invent appointment availability.",
+        "Escalate emergencies to clinic staff immediately.",
+      ].join(" "),
+    };
+  }
 
-• Answer patient phone calls naturally.
-• Help patients schedule appointments.
-• Help patients reschedule appointments.
-• Help patients cancel appointments.
-• Answer office questions.
-• Collect patient information.
-• Never invent appointment availability.
-• Never fabricate insurance coverage.
-• Keep responses short because they are spoken aloud.
-• Ask only ONE question at a time.
-• Be warm, conversational and efficient.
-
-If the caller describes a medical emergency,
-advise them to hang up and call 911 immediately.
-
-Always remain professional.
-
-Clinic:
-${CLINIC_NAME}
-`.trim();
-
-/**
- * ============================================================
- * System Prompt
- * ============================================================
- */
-
-export function buildSystemPrompt(): string {
-  return DEFAULT_SYSTEM_PROMPT;
+  buildConversation(
+    userMessage: string,
+    history: readonly ChatMessage[] = [],
+    context: PromptContext = {},
+  ): readonly ChatMessage[] {
+    return [
+      this.buildSystemPrompt(context),
+      ...history,
+      {
+        role: "user",
+        content: userMessage,
+      },
+    ];
+  }
 }
 
 /**
- * ============================================================
- * Appointment Context
- * ============================================================
+ * Shared Prompt Builder.
  */
+export const promptBuilder =
+  new PromptBuilder();
 
-export function buildAppointmentContext(
-  appointment: Partial<AppointmentData>
-): string {
-  return `
-Current Appointment Information
-
-Patient Name:
-${appointment.patientName ?? "Unknown"}
-
-Phone:
-${appointment.phoneNumber ?? "Unknown"}
-
-Reason:
-${appointment.reason ?? "Unknown"}
-
-Preferred Date:
-${appointment.appointmentDate ?? "Unknown"}
-
-Preferred Time:
-${appointment.appointmentTime ?? "Unknown"}
-`.trim();
-}
-
-/**
- * ============================================================
- * Conversation Context
- * ============================================================
- */
-
-export function buildConversationContext(
-  session: AIConversationSession
-): string {
-  return `
-Conversation State
-
-State:
-${session.state}
-
-Intent:
-${session.intent}
-
-Messages:
-${session.messages.length}
-`.trim();
-}
-
-/**
- * ============================================================
- * Complete Prompt
- * ============================================================
- */
-
-export function buildPrompt(
-  session: AIConversationSession
-): string {
-  return [
-    buildSystemPrompt(),
-    "",
-    buildConversationContext(session),
-    "",
-    buildAppointmentContext(
-      session.appointment
-    ),
-  ].join("\n");
-}
+export default promptBuilder;

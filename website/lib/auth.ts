@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/browser";
+import { getPasswordRecoveryRedirectUrl } from "@/lib/auth/password-recovery";
 
 export async function signUp(
   email: string,
@@ -46,6 +47,7 @@ export async function resetPassword(
   const supabase = createClient();
 
   return await supabase.auth.resetPasswordForEmail(
-    email
+    email,
+    { redirectTo: getPasswordRecoveryRedirectUrl() },
   );
 }

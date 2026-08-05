@@ -10,7 +10,7 @@ export default function WebsiteLayout({
     <>
       <Header />
 
-      <main className="pt-20 min-h-screen">
+      <main className="min-h-screen pt-[100px] md:pt-20">
         {children}
       </main>
 

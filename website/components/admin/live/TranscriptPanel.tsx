@@ -35,9 +35,9 @@ export default function TranscriptPanel({
   }, [transcript]);
 
   return (
-    <div className="flex h-[650px] flex-col rounded-xl border bg-white shadow-sm">
+    <section aria-label="Live transcript" tabIndex={0} className="flex h-[min(70vh,650px)] min-h-[360px] min-w-0 flex-col rounded-xl border bg-white shadow-sm">
       {/* Header */}
-      <div className="border-b px-6 py-4">
+      <div className="border-b px-4 py-3 sm:px-6 sm:py-4">
         <h2 className="text-lg font-semibold text-slate-900">
           Live Transcript
         </h2>
@@ -49,7 +49,7 @@ export default function TranscriptPanel({
       </div>
 
       {/* Messages */}
-      <div className="flex-1 space-y-4 overflow-y-auto p-6">
+      <div className="flex-1 space-y-4 overflow-y-auto overscroll-contain p-4 sm:p-6">
         {transcript.length === 0 ? (
           <div className="flex h-full items-center justify-center">
             <div className="text-center">
@@ -83,7 +83,7 @@ export default function TranscriptPanel({
                 }`}
               >
                 <div
-                  className={`max-w-[80%] rounded-2xl px-4 py-3 shadow-sm ${
+                  className={`max-w-[90%] break-words rounded-2xl px-4 py-3 shadow-sm sm:max-w-[80%] ${
                     isUser
                       ? "bg-slate-100"
                       : isAssistant
@@ -126,8 +126,8 @@ export default function TranscriptPanel({
       </div>
 
       {/* Footer */}
-      <div className="border-t bg-slate-50 px-6 py-3">
-        <div className="flex items-center justify-between text-xs text-slate-500">
+      <div className="border-t bg-slate-50 px-4 py-3 sm:px-6">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
           <span>
             Messages: {transcript.length}
           </span>
@@ -135,6 +135,6 @@ export default function TranscriptPanel({
           <span>Live Monitoring Enabled</span>
         </div>
       </div>
-    </div>
+    </section>
   );
 }

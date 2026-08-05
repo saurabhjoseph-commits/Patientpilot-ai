@@ -26,7 +26,7 @@ export default function DemoLauncher() {
         </div>
 
         <Link
-          href="/demo"
+          href="/admin/demo"
           className="inline-flex items-center gap-3 rounded-xl bg-white px-6 py-4 font-semibold text-blue-700 shadow-lg transition hover:scale-105 hover:bg-slate-100"
         >
           <PlayCircle className="h-6 w-6" />

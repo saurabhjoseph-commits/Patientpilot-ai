@@ -1,10 +1,15 @@
 import Link from "next/link";
 import { supabaseServer } from "@/lib/supabase-server";
+import { ResponsiveTable } from "@/components/ui/responsive";
+import { requireAdminPagePermission } from "@/lib/auth-server";
+import { Permissions } from "@/lib/platform/domain/identity";
 
 export default async function LeadsPage() {
+  const identity = await requireAdminPagePermission(Permissions.LeadsRead);
   const { data: leads, error } = await supabaseServer
     .from("contacts")
     .select("*")
+    .eq("clinic_id", identity.clinicId)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -31,15 +36,16 @@ export default async function LeadsPage() {
         </p>
       </div>
 
-      <div className="overflow-hidden rounded-xl border bg-white shadow">
-        <table className="min-w-full">
+      <div className="rounded-xl border bg-white shadow">
+        <ResponsiveTable>
+        <table className="min-w-[640px] w-full">
           <thead className="bg-slate-900 text-white">
             <tr>
               <th className="p-4 text-left">Clinic</th>
-              <th className="p-4 text-left">Dentist</th>
-              <th className="p-4 text-left">Email</th>
+              <th className="hidden p-4 text-left sm:table-cell">Dentist</th>
+              <th className="hidden p-4 text-left lg:table-cell">Email</th>
               <th className="p-4 text-left">Phone</th>
-              <th className="p-4 text-left">Monthly Calls</th>
+              <th className="hidden p-4 text-left md:table-cell">Monthly Calls</th>
               <th className="p-4 text-left">Status</th>
               <th className="p-4 text-left">Actions</th>
             </tr>
@@ -54,13 +60,13 @@ export default async function LeadsPage() {
                 >
                   <td className="p-4">{lead.clinic_name}</td>
 
-                  <td className="p-4">{lead.dentist_name}</td>
+                  <td className="hidden p-4 sm:table-cell">{lead.dentist_name}</td>
 
-                  <td className="p-4">{lead.email}</td>
+                  <td className="hidden p-4 lg:table-cell break-all">{lead.email}</td>
 
                   <td className="p-4">{lead.phone}</td>
 
-                  <td className="p-4">{lead.monthly_calls}</td>
+                  <td className="hidden p-4 md:table-cell">{lead.monthly_calls}</td>
 
                   <td className="p-4">
                     <span className="rounded-full bg-green-100 px-3 py-1 text-sm text-green-700">
@@ -90,6 +96,7 @@ export default async function LeadsPage() {
             )}
           </tbody>
         </table>
+        </ResponsiveTable>
       </div>
     </div>
   );

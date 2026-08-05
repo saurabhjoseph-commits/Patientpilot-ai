@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase-server";
 import { logLeadActivity } from "@/lib/activity";
+import { requirePermission } from "@/lib/infrastructure/identity/AuthorizationContext";
+import { Permissions } from "@/lib/platform/domain/identity";
+import { resolveAdminClinic } from "@/lib/clinic/clinic-scope";
 
 export async function POST(req: NextRequest) {
+  const authorization = requirePermission(req, Permissions.LeadsUpdate);
+  if (authorization instanceof Response) return authorization;
   try {
     const { leadId, notes } = await req.json();
 
@@ -24,7 +29,8 @@ export async function POST(req: NextRequest) {
         notes,
         updated_at: new Date().toISOString(),
       })
-      .eq("id", leadId);
+      .eq("id", leadId)
+      .eq("clinic_id", resolveAdminClinic(authorization).clinicId);
 
     if (error) {
       console.error("Supabase Error:", error);

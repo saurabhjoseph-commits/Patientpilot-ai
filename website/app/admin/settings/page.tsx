@@ -8,6 +8,8 @@ import {
   CheckCircle2,
   AlertCircle,
 } from "lucide-react";
+import { requireAdminPagePermission } from "@/lib/auth-server";
+import { Permissions } from "@/lib/platform/domain/identity";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +24,7 @@ function statusColor(value?: string) {
 }
 
 export default async function SettingsPage() {
+  await requireAdminPagePermission(Permissions.SettingsRead);
   const openAIConfigured = !!process.env.OPENAI_API_KEY;
   const supabaseConfigured =
     !!process.env.NEXT_PUBLIC_SUPABASE_URL &&

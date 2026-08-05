@@ -17,6 +17,10 @@ import {
   createSummaryService,
 } from "@/lib/summaries/service";
 
+import {
+  intentClassifier,
+} from "@/lib/ai/intent-classifier";
+
 import type {
   AICompletionResult,
   AIConversationSession,
@@ -35,6 +39,7 @@ import type {
 import type {
   CallSummary,
 } from "@/lib/summaries/types";
+import type { ClinicScope } from "@/lib/clinic/clinic-scope";
 
 /**
  * ============================================================
@@ -74,8 +79,8 @@ const DEFAULT_CONTEXT: AIContext = {
 export async function executeConversationWorkflow(
   callSid: string,
   userMessage: string,
+  scope: ClinicScope,
 ): Promise<ConversationWorkflowResult> {
-
   const message: AIMessage = {
     id: crypto.randomUUID(),
     role: "user",
@@ -84,18 +89,25 @@ export async function executeConversationWorkflow(
     timestamp: new Date().toISOString(),
   };
 
-  const aiResponse = await continueConversation({
-  callId: callSid,
-  context: DEFAULT_CONTEXT,
-  message,
-  intent: "unknown",
-});
+  /**
+   * Detect conversation intent before AI execution.
+   */
+  const classification =
+    intentClassifier.classify(userMessage);
 
-const ai: AICompletionResult = {
-  response: aiResponse,
-  analysis: aiResponse.analysis,
-  actions: aiResponse.actions,
-};
+  const aiResponse =
+    await continueConversation({
+      callId: callSid,
+      context: DEFAULT_CONTEXT,
+      message,
+      intent: classification.intent,
+    });
+
+  const ai: AICompletionResult = {
+    response: aiResponse,
+    analysis: aiResponse.analysis,
+    actions: aiResponse.actions,
+  };
 
   /**
    * Reload latest session.
@@ -103,9 +115,17 @@ const ai: AICompletionResult = {
   const session =
     getConversation(callSid);
 
-  let appointment: Appointment | undefined;
-  let patient: Patient | undefined;
-  let summary: CallSummary | undefined;
+  let appointment:
+    | Appointment
+    | undefined;
+
+  let patient:
+    | Patient
+    | undefined;
+
+  let summary:
+    | CallSummary
+    | undefined;
 
   /**
    * Synchronize appointment.
@@ -114,6 +134,7 @@ const ai: AICompletionResult = {
     await syncAppointment(
       session,
       ai,
+      scope,
     );
 
   if (
@@ -129,6 +150,7 @@ const ai: AICompletionResult = {
     const patientResult =
       await syncPatient(
         appointment,
+        DEFAULT_CONTEXT.clinicName,
       );
 
     patient =

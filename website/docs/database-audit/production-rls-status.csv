@@ -1,0 +1,12 @@
+schemaname	tablename	rowsecurity
+public	ai_actions	TRUE
+public	appointments	TRUE
+public	call_messages	TRUE
+public	call_summaries	TRUE
+public	calls	TRUE
+public	clinic_settings	TRUE
+public	clinics	TRUE
+public	contacts	TRUE
+public	lead_activity	TRUE
+public	patients	TRUE
+public	profiles	TRUE

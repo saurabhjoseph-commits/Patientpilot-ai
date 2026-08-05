@@ -13,6 +13,7 @@ import {
   TerminalSquare,
   Settings,
   LogOut,
+  Building2,
 } from "lucide-react";
 
 const navigation = [
@@ -30,6 +31,12 @@ const navigation = [
     name: "Patients",
     href: "/admin/patients",
     icon: Users,
+  },
+  {
+    name: "Clinics",
+    href: "/admin/clinics",
+    icon: Building2,
+    requiresClinicRead: true,
   },
   {
     name: "Appointments",
@@ -63,15 +70,21 @@ const navigation = [
   },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({
+  canViewClinics,
+  onNavigate,
+}: {
+  canViewClinics: boolean;
+  onNavigate?: () => void;
+}) {
   const pathname = usePathname();
 
   return (
-    <aside className="flex h-screen w-64 flex-col bg-slate-950 text-white">
+    <aside className="flex h-full min-h-screen w-full flex-col bg-slate-950 text-white">
       {/* Logo */}
 
       <div className="border-b border-slate-800 px-6 py-7">
-        <h1 className="text-3xl font-bold">
+        <h1 className="text-2xl font-bold">
           PatientPilot AI
         </h1>
 
@@ -84,7 +97,7 @@ export default function Sidebar() {
 
       <nav className="flex-1 overflow-y-auto px-3 py-6">
         <ul className="space-y-2">
-          {navigation.map((item) => {
+          {navigation.filter((item) => !item.requiresClinicRead || canViewClinics).map((item) => {
             const Icon = item.icon;
 
             const active =
@@ -96,6 +109,7 @@ export default function Sidebar() {
               <li key={item.href}>
                 <Link
                   href={item.href}
+                  onClick={onNavigate}
                   className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all ${
                     active
                       ? "bg-blue-600 text-white shadow"
@@ -117,6 +131,7 @@ export default function Sidebar() {
       <div className="border-t border-slate-800 p-4">
         <Link
           href="/login"
+          onClick={onNavigate}
           className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-red-400 transition hover:bg-red-600 hover:text-white"
         >
           <LogOut className="h-5 w-5" />

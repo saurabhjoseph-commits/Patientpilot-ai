@@ -11,6 +11,9 @@ export interface ToolContext {
    */
   callId: string;
 
+  /** Trusted scope supplied by the workflow entry point. */
+  clinicScope?: import("@/lib/clinic/clinic-scope").ClinicScope;
+
   /**
    * Reserved for future multi-tenant support.
    */

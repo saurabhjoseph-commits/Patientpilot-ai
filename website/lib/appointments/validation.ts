@@ -125,13 +125,13 @@ export function validateAppointmentTime(
  * ============================================================
  */
 
-export function validateReason(
-  reason: string
+export function validateService(
+  service: string
 ): ValidationResult {
   const errors: string[] = [];
 
-  if (!reason || reason.trim().length < 3) {
-    errors.push("Appointment reason is required.");
+  if (!service || service.trim().length < 3) {
+    errors.push("Appointment service is required.");
   }
 
   return {
@@ -151,11 +151,16 @@ export function validateCreateAppointment(
   appointment: CreateAppointmentInput
 ): ValidationResult {
   const validations = [
+    {
+      valid: appointment.clinicId.length > 0,
+      score: appointment.clinicId.length > 0 ? 100 : 0,
+      errors: appointment.clinicId.length > 0 ? [] : ["Trusted clinic scope is required."],
+    },
     validatePatientName(
       appointment.patientName
     ),
     validatePhoneNumber(
-      appointment.phoneNumber
+      appointment.phone
     ),
     validateAppointmentDate(
       appointment.appointmentDate
@@ -163,8 +168,8 @@ export function validateCreateAppointment(
     validateAppointmentTime(
       appointment.appointmentTime
     ),
-    validateReason(
-      appointment.reason
+    validateService(
+      appointment.service
     ),
   ];
 
@@ -208,11 +213,11 @@ export function validateUpdateAppointment(
   }
 
   if (
-    appointment.phoneNumber !== undefined
+    appointment.phone !== undefined
   ) {
     errors.push(
       ...validatePhoneNumber(
-        appointment.phoneNumber
+        appointment.phone
       ).errors
     );
   }
@@ -238,11 +243,11 @@ export function validateUpdateAppointment(
   }
 
   if (
-    appointment.reason !== undefined
+    appointment.service !== undefined
   ) {
     errors.push(
-      ...validateReason(
-        appointment.reason
+      ...validateService(
+        appointment.service
       ).errors
     );
   }
@@ -264,23 +269,23 @@ export function validateAppointment(
   appointment: Appointment
 ): ValidationResult {
   return validateCreateAppointment({
-    clinicName:
-      appointment.clinicName,
+    clinicId:
+      appointment.clinicId,
     patientName:
       appointment.patientName,
-    phoneNumber:
-      appointment.phoneNumber,
+    phone:
+      appointment.phone ?? "",
     appointmentDate:
       appointment.appointmentDate,
     appointmentTime:
       appointment.appointmentTime,
-    reason:
-      appointment.reason,
-    callSid:
-      appointment.callSid,
-    leadId:
-      appointment.leadId,
+    service:
+      appointment.service,
+    email:
+      appointment.email ?? undefined,
+    source:
+      appointment.source,
     notes:
-      appointment.notes,
+      appointment.notes ?? undefined,
   });
 }

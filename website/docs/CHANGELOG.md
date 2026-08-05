@@ -12,6 +12,19 @@ Versioning follows Semantic Versioning (MAJOR.MINOR.PATCH).
 
 # [2.0.0] - In Development
 
+## Security — J.3 Telephony Webhook Security
+
+- Added official Twilio signature verification before clinic resolution and workflow execution.
+- Added trusted public webhook URL reconstruction and process-local duplicate delivery handling.
+- Retired the unsigned legacy `/api/twilio` endpoint.
+- Restricted webhook diagnostic endpoints to non-production environments.
+
+## Reliability — J.3.1 Durable Webhook Idempotency
+
+- Added durable verified-delivery claims with a unique provider/fingerprint constraint.
+- Added seven-day delivery retention and a server-only cleanup endpoint.
+- Replaced process-local duplicate handling in Twilio callback routes.
+
 ## Sprint 0 — Foundation
 
 ### Added

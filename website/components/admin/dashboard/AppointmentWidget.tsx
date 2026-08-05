@@ -41,11 +41,11 @@ export default function AppointmentWidget({
                   </h3>
 
                   <p className="mt-1 text-sm text-slate-500">
-                    {appointment.reason}
+                    {appointment.service}
                   </p>
 
                   <p className="mt-1 text-xs text-slate-400">
-                    {appointment.phoneNumber}
+                    {appointment.phone ?? "No phone"}
                   </p>
                 </div>
 
