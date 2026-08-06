@@ -50,15 +50,15 @@ const plans = [
 
 export default function PricingCards() {
   return (
-    <section className="bg-white py-24">
-      <div className="mx-auto max-w-7xl px-6">
+    <section className="bg-white py-16 sm:py-24">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
 
         <div className="grid gap-8 lg:grid-cols-3">
 
           {plans.map((plan) => (
             <div
               key={plan.name}
-              className={`rounded-3xl border p-8 shadow-lg transition hover:-translate-y-2 hover:shadow-2xl ${
+              className={`relative w-full rounded-3xl border bg-white p-6 text-slate-900 shadow-lg transition hover:-translate-y-2 hover:shadow-2xl sm:p-8 ${
                 plan.popular
                   ? "border-blue-600 ring-2 ring-blue-600"
                   : "border-slate-200"
@@ -84,22 +84,22 @@ export default function PricingCards() {
                 </span>
 
                 {plan.price !== "Custom" && (
-                  <span className="text-lg text-slate-500">
+                  <span className="ml-1 text-lg text-slate-500">
                     /month
                   </span>
                 )}
               </div>
 
-              <ul className="mt-10 space-y-4">
+              <ul className="mt-8 space-y-4 sm:mt-10">
 
                 {plan.features.map((feature) => (
                   <li
                     key={feature}
-                    className="flex items-center gap-3"
+                    className="flex items-start gap-3 text-slate-700"
                   >
-                    <Check className="h-5 w-5 text-green-600" />
+                    <Check className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" aria-hidden="true" />
 
-                    <span>{feature}</span>
+                    <span className="leading-6">{feature}</span>
                   </li>
                 ))}
 
@@ -111,7 +111,7 @@ export default function PricingCards() {
                     ? "/book-demo"
                     : "/contact"
                 }
-                className={`mt-10 block rounded-xl py-4 text-center font-semibold transition ${
+                className={`mt-8 block min-h-12 rounded-xl py-3.5 text-center font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 sm:mt-10 ${
                   plan.popular
                     ? "bg-blue-600 text-white hover:bg-blue-700"
                     : "bg-slate-900 text-white hover:bg-slate-800"
