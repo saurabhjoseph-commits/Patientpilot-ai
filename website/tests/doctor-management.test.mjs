@@ -28,8 +28,25 @@ test("doctor APIs enforce server-derived permissions and never accept a browser 
   assert.match(collection, /requirePermission\(request, Permissions\.DoctorsCreate\)/);
   assert.match(item, /requirePermission\(request, Permissions\.DoctorsUpdate\)/);
   assert.match(services, /requirePermission\(request, Permissions\.DoctorsAssignServices\)/);
-  for (const route of [collection, item, services]) assert.match(route, /resolveAdminClinic\(authorization\)\.clinicId/);
-  assert.doesNotMatch(collection, /input\.clinicId|body\.clinicId/);
+  assert.match(item, /Permissions\.DoctorsDelete/);
+  for (const route of [collection, item, services]) assert.match(route, /resolveDoctorClinic\(authorization/);
+  assert.match(collection, /resolveDoctorClinic\(authorization, optionalString\(input\.clinicId\)\)/);
+});
+
+test("global doctor context is explicit and clinic users cannot choose another clinic", () => {
+  const context = read("lib/doctors/clinic-context.ts");
+  const page = read("app/admin/doctors/page.tsx");
+  assert.match(context, /Permissions\.DoctorsManageGlobal/);
+  assert.match(context, /Cross-clinic doctor access is not permitted/);
+  assert.match(context, /Select a clinic before managing doctors/);
+  assert.match(page, /Select a clinic to manage its doctors/);
+  assert.match(page, /Global clinic context/);
+});
+
+test("permanent deletion fails closed until historical dependencies can be verified", () => {
+  const item = read("app/api/admin/doctors/[id]/route.ts");
+  assert.match(item, /status: 409/);
+  assert.match(item, /Deactivate the doctor instead/);
 });
 
 test("doctor UI supports search, filters, sorting, pagination, active state, and responsive cards", () => {
@@ -51,5 +68,6 @@ test("administrative roles receive doctor permissions while staff roles do not",
   const catalog = read("lib/platform/domain/identity/permission-catalog.ts");
   assert.match(catalog, /DoctorsRead: "doctors\.read"/);
   assert.match(catalog, /"practice-manager"[\s\S]*Permissions\.DoctorsCreate/);
+  assert.match(catalog, /"clinic-owner": allPermissions\.filter\([\s\S]*DoctorsDelete/);
   assert.doesNotMatch(catalog.match(/receptionist: \[[\s\S]*?\],/)?.[0] ?? "", /Doctors(Create|Update|Deactivate|AssignServices)/);
 });

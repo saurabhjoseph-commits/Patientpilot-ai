@@ -20,7 +20,7 @@ export default async function AdminLayout({
   }
 
   return (
-    <AdminShell canViewClinics={user.permissionCodes.includes(Permissions.ClinicRead)} canViewDoctors={user.permissionCodes.includes(Permissions.DoctorsRead)}>
+    <AdminShell canViewClinics={user.permissionCodes.includes(Permissions.ClinicRead)} canViewDoctors={user.permissionCodes.includes(Permissions.DoctorsRead)} canManageGlobal={user.permissionCodes.includes(Permissions.DoctorsManageGlobal)}>
       {children}
     </AdminShell>
   );

@@ -38,6 +38,7 @@ const navigation = [
     href: "/admin/clinics",
     icon: Building2,
     requiresClinicRead: true,
+    requiresGlobalManagement: true,
   },
   {
     name: "Appointments",
@@ -69,6 +70,7 @@ const navigation = [
     name: "Developer Console",
     href: "/admin/test-console",
     icon: TerminalSquare,
+    requiresGlobalManagement: true,
   },
   {
     name: "Settings",
@@ -80,10 +82,12 @@ const navigation = [
 export default function Sidebar({
   canViewClinics,
   canViewDoctors,
+  canManageGlobal,
   onNavigate,
 }: {
   canViewClinics: boolean;
   canViewDoctors: boolean;
+  canManageGlobal: boolean;
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
@@ -108,7 +112,8 @@ export default function Sidebar({
         <ul className="space-y-2">
           {navigation.filter((item) =>
             (!item.requiresClinicRead || canViewClinics) &&
-            (!item.requiresDoctorsRead || canViewDoctors),
+            (!item.requiresDoctorsRead || canViewDoctors) &&
+            (!item.requiresGlobalManagement || canManageGlobal),
           ).map((item) => {
             const Icon = item.icon;
 

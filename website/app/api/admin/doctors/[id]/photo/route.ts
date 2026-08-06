@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { resolveAdminClinic } from "@/lib/clinic/clinic-scope";
+import { resolveDoctorClinic } from "@/lib/doctors/clinic-context";
 import { createDoctorService } from "@/lib/doctors/service";
 import { requirePermission } from "@/lib/infrastructure/identity/AuthorizationContext";
 import { Permissions } from "@/lib/platform/domain/identity";
@@ -13,7 +13,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (authorization instanceof Response) return authorization;
   const file = (await request.formData()).get("photo");
   if (!(file instanceof File) || !file.type.startsWith("image/") || file.size > MAX_BYTES) return NextResponse.json({ message: "Upload a JPG, PNG, or WebP image smaller than 2 MB." }, { status: 400 });
-  const clinicId = resolveAdminClinic(authorization).clinicId; const doctorId = (await params).id;
+  const clinicId = await resolveDoctorClinic(authorization, request.nextUrl.searchParams.get("clinicId")); const doctorId = (await params).id;
   if (!await createDoctorService().get(clinicId, doctorId)) return NextResponse.json({ message: "Doctor not found." }, { status: 404 });
   const extension = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
   const path = `${clinicId}/${doctorId}/${crypto.randomUUID()}.${extension}`;

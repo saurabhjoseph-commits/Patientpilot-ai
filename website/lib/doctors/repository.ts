@@ -35,6 +35,12 @@ export class DoctorRepository {
   }
 
   async replaceServices(clinicId: string, doctorId: string, assignments: readonly DoctorServiceAssignment[]): Promise<void> {
+    if (assignments.length) {
+      const ids = assignments.map((assignment) => assignment.serviceId);
+      const { count, error: servicesError } = await supabaseServer.from("clinic_services").select("id", { count: "exact", head: true }).eq("clinic_id", clinicId).in("id", ids);
+      if (servicesError) throw servicesError;
+      if (count !== new Set(ids).size) throw new Error("One or more selected services do not belong to this clinic.");
+    }
     const { error: removed } = await supabaseServer.from("doctor_services").delete().eq("clinic_id", clinicId).eq("doctor_id", doctorId);
     if (removed) throw removed;
     if (!assignments.length) return;
