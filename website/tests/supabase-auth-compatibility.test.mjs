@@ -7,7 +7,8 @@ test("temporary Supabase Auth adapter fails closed and derives administrator cli
   const sql = read("lib/supabase/migrations/0013_india_supabase_auth_profile_bootstrap.sql");
   assert.match(adapter, /auth\.getUser/);
   assert.match(adapter, /profiles/);
-  assert.match(adapter, /if \(error \|\| !profile\?\.clinic_id \|\| !profile\.role\) return null/);
+  assert.match(adapter, /if \(error\) throw error/);
+  assert.match(adapter, /if \(!profile\?\.clinic_id \|\| !profile\.role\) return \{ identity: null/);
   assert.match(adapter, /super_admin: "super-admin"/);
   assert.match(adapter, /DefaultRolePolicies\[roleCode\]/);
   assert.match(sql, /Bootstrap auth user is missing/);

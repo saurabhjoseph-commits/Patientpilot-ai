@@ -2,22 +2,23 @@
  * TEMPORARY India-launch adapter. Remove after full public Identity persistence
  * is migrated and verified. Supabase Auth remains the credential/session source.
  */
-import { createServerClient } from "@supabase/ssr";
 import type { NextRequest } from "next/server";
 import { DefaultRolePolicies } from "@/lib/platform/domain/identity";
-import { env } from "@/lib/config/env";
 import { supabaseServer } from "@/lib/supabase-server";
+import { createProxyClient } from "@/lib/supabase/proxy";
 
 export interface CompatibilityIdentity { userId: string; tenantId: string; clinicId: string; roleCodes: readonly string[]; permissionCodes: readonly string[]; }
 const roleMap: Record<string, string> = { super_admin: "super-admin", owner: "clinic-owner", manager: "practice-manager", receptionist: "receptionist", dentist: "dentist" };
 
-export async function getCompatibilityIdentity(request: NextRequest): Promise<CompatibilityIdentity | null> {
-  const auth = createServerClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, { cookies: { getAll: () => request.cookies.getAll(), setAll: () => undefined } });
+export async function getCompatibilityIdentity(request: NextRequest) {
+  const proxyClient = createProxyClient(request);
+  const auth = proxyClient.client;
   const { data: { user } } = await auth.auth.getUser();
-  if (!user) return null;
+  if (!user) return { identity: null, applyCookies: proxyClient.applyCookies };
   const { data: profile, error } = await supabaseServer.from("profiles").select("clinic_id,role").eq("id", user.id).maybeSingle();
-  if (error || !profile?.clinic_id || !profile.role) return null;
+  if (error) throw error;
+  if (!profile?.clinic_id || !profile.role) return { identity: null, applyCookies: proxyClient.applyCookies };
   const roleCode = roleMap[profile.role];
-  if (!roleCode) return null;
-  return { userId: user.id, clinicId: profile.clinic_id, tenantId: profile.clinic_id, roleCodes: [roleCode], permissionCodes: DefaultRolePolicies[roleCode] ?? [] };
+  if (!roleCode) return { identity: null, applyCookies: proxyClient.applyCookies };
+  return { identity: { userId: user.id, clinicId: profile.clinic_id, tenantId: profile.clinic_id, roleCodes: [roleCode], permissionCodes: DefaultRolePolicies[roleCode] ?? [] }, applyCookies: proxyClient.applyCookies };
 }

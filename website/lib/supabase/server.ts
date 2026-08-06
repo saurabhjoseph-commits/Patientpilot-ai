@@ -13,10 +13,10 @@ export async function createClient() {
         getAll() {
           return cookieStore.getAll();
         },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            cookieStore.set(name, value, options);
-          });
+        // Server Components may read cookies but cannot persist refresh writes.
+        // Proxy refreshes and persists sessions before rendering protected pages.
+        setAll() {
+          // Intentionally read-only in this runtime context.
         },
       },
     }

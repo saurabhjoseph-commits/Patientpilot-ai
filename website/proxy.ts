@@ -12,7 +12,8 @@ export async function proxy(request: NextRequest) {
     bootstrapInfrastructure();
     identity = await createIdentityAuthenticationService().validate(accessToken, refreshToken);
   }
-  identity ??= await getCompatibilityIdentity(request);
+  const compatibility = identity ? null : await getCompatibilityIdentity(request);
+  identity ??= compatibility?.identity ?? null;
   if (!identity) return unauthenticated(request, isApi);
   const headers = new Headers(request.headers);
   headers.set("x-identity-user-id", identity.userId);
@@ -20,7 +21,8 @@ export async function proxy(request: NextRequest) {
   headers.set("x-identity-clinic-id", identity.clinicId);
   headers.set("x-identity-role-codes", identity.roleCodes.join(","));
   headers.set("x-identity-permission-codes", identity.permissionCodes.join(","));
-  return NextResponse.next({ request: { headers } });
+  const response = NextResponse.next({ request: { headers } });
+  return compatibility ? compatibility.applyCookies(response) : response;
 }
 
 function unauthenticated(request: NextRequest, isApi: boolean): NextResponse {
