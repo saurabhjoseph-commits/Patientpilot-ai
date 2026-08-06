@@ -14,6 +14,7 @@ import {
   Settings,
   LogOut,
   Building2,
+  Stethoscope,
 } from "lucide-react";
 
 const navigation = [
@@ -44,6 +45,12 @@ const navigation = [
     icon: CalendarDays,
   },
   {
+    name: "Doctors",
+    href: "/admin/doctors",
+    icon: Stethoscope,
+    requiresDoctorsRead: true,
+  },
+  {
     name: "Call Center",
     href: "/admin/call-center",
     icon: PhoneCall,
@@ -72,9 +79,11 @@ const navigation = [
 
 export default function Sidebar({
   canViewClinics,
+  canViewDoctors,
   onNavigate,
 }: {
   canViewClinics: boolean;
+  canViewDoctors: boolean;
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
@@ -97,7 +106,10 @@ export default function Sidebar({
 
       <nav className="flex-1 overflow-y-auto px-3 py-6">
         <ul className="space-y-2">
-          {navigation.filter((item) => !item.requiresClinicRead || canViewClinics).map((item) => {
+          {navigation.filter((item) =>
+            (!item.requiresClinicRead || canViewClinics) &&
+            (!item.requiresDoctorsRead || canViewDoctors),
+          ).map((item) => {
             const Icon = item.icon;
 
             const active =

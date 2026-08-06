@@ -30,6 +30,67 @@ test("ownership-sensitive inserts include clinic_id", () => {
   assert.match(read("lib/infrastructure/persistence/supabase/repositories/ClinicSettingsRepository.ts"), /clinic_id: data\.clinicId/);
 });
 
+test("G1 removes only the audited legacy demo appointments and fails closed on drift", () => {
+  const cleanup = read("lib/supabase/migrations/0016a_g1_legacy_demo_appointment_cleanup.sql");
+  assert.match(cleanup, /begin;/i);
+  assert.match(cleanup, /commit;/i);
+  assert.match(cleanup, /appointment_count <> 4 or unowned_appointment_count <> 4/);
+  assert.match(cleanup, /patient_count <> 0/);
+  assert.match(cleanup, /delete from public\.appointments[\s\S]*where clinic_id is null/i);
+  assert.doesNotMatch(cleanup, /insert into public\.appointments/i);
+  assert.doesNotMatch(cleanup, /update public\.appointments/i);
+});
+
+test("G2 service catalog is clinic-scoped, validated, and has no browser policy", () => {
+  const migration = read("lib/supabase/migrations/0017_g2_clinic_services.sql");
+  assert.match(migration, /clinic_id uuid not null/);
+  assert.match(migration, /references public\.clinics\(id\)/);
+  assert.match(migration, /default_duration_minutes > 0/);
+  assert.match(migration, /default_price is null or default_price >= 0/);
+  assert.match(migration, /unique index clinic_services_clinic_name_key/);
+  assert.match(migration, /enable row level security/);
+  assert.doesNotMatch(migration, /create policy/i);
+  assert.doesNotMatch(migration, /insert into public\.clinic_services/i);
+});
+
+test("G3 doctor-service assignments reject cross-clinic relationships", () => {
+  const migration = read("lib/supabase/migrations/0018_g3_doctors.sql");
+  assert.match(migration, /foreign key \(doctor_id, clinic_id\) references public\.doctors\(id, clinic_id\)/);
+  assert.match(migration, /foreign key \(service_id, clinic_id\) references public\.clinic_services\(id, clinic_id\)/);
+  assert.match(migration, /doctors_duration_positive/);
+  assert.match(migration, /alter table public\.doctors enable row level security/);
+  assert.doesNotMatch(migration, /create policy/i);
+});
+
+test("G4 schedule, leave, room, and blocked-time contracts retain clinic ownership", () => {
+  const migration = read("lib/supabase/migrations/0019_g4_doctor_scheduling.sql");
+  for (const table of ["clinic_rooms", "doctor_schedules", "doctor_leave", "doctor_room_assignments", "blocked_time"]) {
+    assert.match(migration, new RegExp(`create table public\\.${table}`));
+    assert.match(migration, new RegExp(`alter table public\\.${table} enable row level security`));
+  }
+  assert.match(migration, /foreign key \(doctor_id, clinic_id\) references public\.doctors\(id, clinic_id\)/);
+  assert.match(migration, /foreign key \(room_id, clinic_id\) references public\.clinic_rooms\(id, clinic_id\)/);
+  assert.match(migration, /blocked_time_target check \(doctor_id is not null or room_id is not null\)/);
+  assert.doesNotMatch(migration, /create policy/i);
+});
+
+test("every appointment creation flow supplies a trusted clinic_id", () => {
+  const types = read("lib/appointments/types.ts");
+  const validation = read("lib/appointments/validation.ts");
+  const mapper = read("lib/appointments/mapper.ts");
+  const adminApi = read("app/api/appointments/route.ts");
+  const aiTool = read("lib/ai/tools/appointment.ts");
+  const aiWorkflow = read("lib/appointments/integration.ts");
+
+  assert.match(types, /readonly clinicId: string;/);
+  assert.match(validation, /Trusted clinic scope is required/);
+  assert.match(mapper, /clinic_id: input\.clinicId/);
+  assert.match(adminApi, /clinicId: resolveAdminClinic\(authorization\)\.clinicId/);
+  assert.doesNotMatch(adminApi, /input\.clinic_id|body\.clinic_id/);
+  assert.match(aiTool, /clinicId: context\.clinicScope\.clinicId/);
+  assert.match(aiWorkflow, /clinicId: scope\.clinicId/);
+});
+
 test("appointment persistence uses only authoritative production columns", () => {
   const mapper = read("lib/appointments/mapper.ts");
   const repository = read("lib/appointments/repository.ts");
