@@ -7,6 +7,8 @@ import {
   RotateCcw,
   PhoneOff,
   Presentation,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 
 import { useDemo } from "./DemoProvider";
@@ -19,6 +21,9 @@ export default function CallControls() {
     pauseDemo,
     restartDemo,
     completeDemo,
+    soundEnabled,
+    soundNotice,
+    toggleSound,
   } = useDemo();
 
   const isIdle = state === "idle";
@@ -150,6 +155,17 @@ export default function CallControls() {
             End Call
           </button>
 
+          <button
+            type="button"
+            onClick={toggleSound}
+            aria-label={soundEnabled ? "Mute demo sound" : "Turn on demo sound"}
+            aria-pressed={soundEnabled}
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 font-medium text-slate-700 transition-all hover:bg-slate-50"
+          >
+            {soundEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
+            {soundEnabled ? "Sound On" : "Sound Off"}
+          </button>
+
           {/* Presentation */}
 
           <button
@@ -174,6 +190,8 @@ export default function CallControls() {
           </button>
         </div>
       </div>
+
+      {soundNotice && <p role="status" className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">{soundNotice}</p>}
 
       {/* Status */}
 

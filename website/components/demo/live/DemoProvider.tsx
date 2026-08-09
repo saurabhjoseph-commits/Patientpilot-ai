@@ -15,6 +15,7 @@ import { defaultScenario } from "./data";
 import { ConversationScheduler } from "./ConversationScheduler";
 import { getDemoProgress, getDemoStage } from "./stage";
 import { incrementTimer } from "./timer";
+import { createDemoAudioManager, type BrowserDemoAudioManager } from "@/lib/demo/audio/demo-audio-manager";
 import type {
   DemoContextValue,
   DemoScenario,
@@ -48,11 +49,19 @@ export function DemoProvider({
   const [elapsedSeconds, setElapsedSeconds] =
     useState(0);
 
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [soundNotice, setSoundNotice] = useState<string | null>(null);
+
   const timerRef =
     useRef<NodeJS.Timeout | null>(null);
 
   const conversationRef =
     useRef<NodeJS.Timeout | null>(null);
+  const audioRef = useRef<BrowserDemoAudioManager | null>(null);
+  const connectedRef = useRef(false);
+  const completedRef = useRef(false);
+
+  const audio = () => (audioRef.current ??= createDemoAudioManager());
 
   const isPlaying = state === "playing";
 
@@ -98,7 +107,9 @@ export function DemoProvider({
 
   const startDemo = useCallback(() => {
     clearTimers();
-
+    audio().stopAll();
+    connectedRef.current = false;
+    completedRef.current = false;
     setState("playing");
     setElapsedSeconds(0);
     setCurrentMessageIndex(0);
@@ -106,6 +117,7 @@ export function DemoProvider({
 
   const pauseDemo = useCallback(() => {
     clearTimers();
+    audioRef.current?.stopAll();
     setState("paused");
   }, []);
 
@@ -115,6 +127,9 @@ export function DemoProvider({
 
   const restartDemo = useCallback(() => {
     clearTimers();
+    audioRef.current?.stopAll();
+    connectedRef.current = false;
+    completedRef.current = false;
 
     setElapsedSeconds(0);
     setCurrentMessageIndex(0);
@@ -123,6 +138,7 @@ export function DemoProvider({
 
   const stopDemo = useCallback(() => {
     clearTimers();
+    audioRef.current?.stopAll();
 
     setElapsedSeconds(0);
     setCurrentMessageIndex(0);
@@ -131,6 +147,7 @@ export function DemoProvider({
 
   const completeDemo = useCallback(() => {
     clearTimers();
+    audioRef.current?.stopAll();
     setState("completed");
   }, []);
 
@@ -175,10 +192,11 @@ export function DemoProvider({
 
     if (!step) return;
 
+    const delay = currentMessageIndex === 0 ? Math.max(step.delay, 2600) : step.delay;
     conversationRef.current =
       setTimeout(() => {
         nextMessage();
-      }, step.delay);
+      }, delay);
 
     return () => {
       if (conversationRef.current) {
@@ -193,12 +211,39 @@ export function DemoProvider({
   ]);
 
   useEffect(() => {
-    return () => clearTimers();
-  }, []);
+    if (!isPlaying) return;
+    if (stage === "ringing") {
+      if (!audio().playRingtone() && soundEnabled) setSoundNotice("Sound is muted by your browser. Tap Sound On.");
+      return;
+    }
+    audioRef.current?.stopRingtone();
+    if (stage === "connected" && !connectedRef.current) {
+      connectedRef.current = true;
+      if (!audio().playConnectTone() && soundEnabled) setSoundNotice("Sound is muted by your browser. Tap Sound On.");
+    }
+  }, [isPlaying, stage, soundEnabled]);
+
+  useEffect(() => {
+    if (!isPlaying || !currentMessage || currentMessage.speaker === "system") return;
+    const spoken = audio().speak(currentMessage.text, currentMessage.speaker);
+    if (!spoken && soundEnabled) setSoundNotice("Sound is muted by your browser. Tap Sound On.");
+  }, [currentMessage, isPlaying, soundEnabled]);
+
+  useEffect(() => {
+    if (state !== "completed" || completedRef.current) return;
+    completedRef.current = true;
+    audioRef.current?.stopAll();
+    if (soundEnabled && !audio().playCompletionTone()) setSoundNotice("Sound is muted by your browser. Tap Sound On.");
+  }, [state, soundEnabled]);
+
+  useEffect(() => () => { clearTimers(); audioRef.current?.dispose(); }, []);
 
   const setScenario = useCallback(
     (nextScenario: DemoScenario) => {
       clearTimers();
+      audioRef.current?.stopAll();
+      connectedRef.current = false;
+      completedRef.current = false;
 
       setScenarioState(nextScenario);
 
@@ -210,6 +255,13 @@ export function DemoProvider({
     },
     []
   );
+
+  const toggleSound = useCallback(() => {
+    const next = !soundEnabled;
+    setSoundEnabled(next);
+    audio().setMuted(!next);
+    setSoundNotice(next ? null : "Sound is off. The transcript remains visible.");
+  }, [soundEnabled]);
 
   const value = useMemo<DemoContextValue>(
     () => ({
@@ -234,6 +286,12 @@ export function DemoProvider({
       isPaused,
 
       isCompleted,
+
+      soundEnabled,
+
+      soundNotice,
+
+      toggleSound,
 
       startDemo,
 
@@ -263,6 +321,9 @@ export function DemoProvider({
       isPlaying,
       isPaused,
       isCompleted,
+      soundEnabled,
+      soundNotice,
+      toggleSound,
       startDemo,
       pauseDemo,
       resumeDemo,

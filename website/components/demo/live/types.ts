@@ -164,6 +164,12 @@ export interface DemoContextValue {
 
   isCompleted: boolean;
 
+  soundEnabled: boolean;
+
+  soundNotice: string | null;
+
+  toggleSound: () => void;
+
   /**
    * Demo controls
    */
