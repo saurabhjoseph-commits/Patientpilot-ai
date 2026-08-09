@@ -18,6 +18,7 @@ import type {
   UpdateAppointmentInput,
 } from "./types";
 import type { ClinicScope } from "@/lib/clinic/clinic-scope";
+import { resolveClinicalLinkage } from "./clinical-linkage";
 
 /**
  * ============================================================
@@ -46,7 +47,7 @@ export async function createAppointmentService(
     );
   }
 
-  return createAppointment(input);
+  return createAppointment({ ...input, ...await resolveClinicalLinkage(input) });
 }
 
 /**
@@ -85,7 +86,23 @@ export async function updateAppointmentService(
     );
   }
 
-  return updateAppointment(id, input, scope);
+  const current = await getAppointment(id, scope);
+  if (!current) throw new Error("Appointment not found.");
+  const linkageChanged = input.doctorId !== undefined || input.serviceId !== undefined || input.roomId !== undefined || input.durationMinutes !== undefined;
+  if (!linkageChanged) return updateAppointment(id, input, scope);
+  const linkage = await resolveClinicalLinkage({
+    clinicId: scope.clinicId,
+    patientName: current.patientName,
+    phone: current.phone ?? "",
+    service: input.service ?? current.service,
+    appointmentDate: input.appointmentDate ?? current.appointmentDate,
+    appointmentTime: input.appointmentTime ?? current.appointmentTime,
+    doctorId: input.doctorId ?? current.doctorId ?? undefined,
+    serviceId: input.serviceId ?? current.serviceId ?? undefined,
+    roomId: input.roomId ?? current.roomId ?? undefined,
+    durationMinutes: input.durationMinutes ?? current.durationMinutes ?? undefined,
+  });
+  return updateAppointment(id, { ...input, ...linkage }, scope);
 }
 
 /**
@@ -119,10 +136,14 @@ export async function completeAppointmentService(
   id: string,
   scope: ClinicScope,
 ): Promise<Appointment> {
-  return updateAppointment(id, {
-    status: "Completed",
-  }, scope);
+  const current = await getAppointment(id, scope);
+  if (!current) throw new Error("Appointment not found.");
+  if (!current.checkedInAt) throw new Error("An appointment must be checked in before it can be completed.");
+  if (current.completedAt || current.status === "Cancelled") throw new Error("This appointment cannot be completed.");
+  return updateAppointment(id, { status: "Completed", completedAt: new Date().toISOString() }, scope);
 }
+
+export async function checkInAppointmentService(id: string, scope: ClinicScope): Promise<Appointment> { const current = await getAppointment(id, scope); if (!current) throw new Error("Appointment not found."); if (current.checkedInAt || current.completedAt || current.status === "Cancelled") throw new Error("This appointment cannot be checked in."); return updateAppointment(id, { status: "Checked In", checkedInAt: new Date().toISOString() }, scope); }
 
 /**
  * Reschedule appointment.

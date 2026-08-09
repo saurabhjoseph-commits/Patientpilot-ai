@@ -13,6 +13,12 @@ export interface Appointment {
   readonly status: AppointmentStatus;
   readonly source: string;
   readonly notes: string | null;
+  readonly doctorId: string | null;
+  readonly serviceId: string | null;
+  readonly roomId: string | null;
+  readonly durationMinutes: number | null;
+  readonly checkedInAt: string | null;
+  readonly completedAt: string | null;
   readonly createdAt: string;
 }
 
@@ -26,6 +32,11 @@ export interface CreateAppointmentInput {
   readonly appointmentTime: string;
   readonly notes?: string;
   readonly source?: string;
+  readonly status?: AppointmentStatus;
+  readonly doctorId?: string;
+  readonly serviceId?: string;
+  readonly roomId?: string;
+  readonly durationMinutes?: number;
 }
 
 export interface UpdateAppointmentInput {
@@ -38,6 +49,12 @@ export interface UpdateAppointmentInput {
   readonly status?: AppointmentStatus;
   readonly source?: string;
   readonly notes?: string;
+  readonly doctorId?: string;
+  readonly serviceId?: string;
+  readonly roomId?: string;
+  readonly durationMinutes?: number;
+  readonly checkedInAt?: string;
+  readonly completedAt?: string;
 }
 
 export interface AppointmentFilters {
@@ -46,6 +63,9 @@ export interface AppointmentFilters {
   readonly appointmentDate?: string;
   readonly patientName?: string;
   readonly phone?: string;
+  readonly doctorId?: string;
+  readonly serviceId?: string;
+  readonly roomId?: string;
 }
 
 export interface AppointmentStats {

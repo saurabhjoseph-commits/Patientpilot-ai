@@ -13,6 +13,12 @@ export interface AppointmentRow {
   source: string;
   notes: string | null;
   created_at: string;
+  doctor_id: string | null;
+  service_id: string | null;
+  room_id: string | null;
+  duration_minutes: number | null;
+  checked_in_at: string | null;
+  completed_at: string | null;
 }
 
 export function toAppointmentPersistence(input: CreateAppointmentInput) {
@@ -26,6 +32,11 @@ export function toAppointmentPersistence(input: CreateAppointmentInput) {
     appointment_time: input.appointmentTime,
     notes: input.notes ?? null,
     source: input.source ?? "AI Receptionist",
+    status: input.status ?? "Confirmed",
+    doctor_id: input.doctorId ?? null,
+    service_id: input.serviceId ?? null,
+    room_id: input.roomId ?? null,
+    duration_minutes: input.durationMinutes ?? null,
   };
 }
 
@@ -43,5 +54,11 @@ export function fromAppointmentPersistence(row: AppointmentRow): Appointment {
     source: row.source,
     notes: row.notes,
     createdAt: row.created_at,
+    doctorId: row.doctor_id,
+    serviceId: row.service_id,
+    roomId: row.room_id,
+    durationMinutes: row.duration_minutes,
+    checkedInAt: row.checked_in_at,
+    completedAt: row.completed_at,
   };
 }

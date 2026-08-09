@@ -1,0 +1,9 @@
+import { NextRequest, NextResponse } from "next/server";
+import { requireAnyPermission } from "@/lib/infrastructure/identity/AuthorizationContext";
+import { Permissions } from "@/lib/platform/domain/identity";
+import { resolveSchedulingDoctor } from "@/lib/scheduling/authorization";
+import { createSchedulingService } from "@/lib/scheduling/service";
+type Context = { params: Promise<{ id: string; blockId: string }> };
+async function resolve(request: NextRequest, context: Context) { const auth = requireAnyPermission(request, [Permissions.CalendarUpdate, Permissions.CalendarUpdateOwn]); if (auth instanceof Response) return auth; try { const params = await context.params; return { scope: await resolveSchedulingDoctor(auth, params.id, request.nextUrl.searchParams.get("clinicId")), id: params.blockId }; } catch { return NextResponse.json({ message: "Blocked-time access is not permitted." }, { status: 403 }); } }
+export async function PATCH(request: NextRequest, context: Context) { const resolved = await resolve(request, context); if (resolved instanceof Response) return resolved; try { const body = await request.json() as Record<string, unknown>; return NextResponse.json({ blockedTime: await createSchedulingService().updateBlockedTime(resolved.scope.clinicId, resolved.id, { doctorId: resolved.scope.doctorId, roomId: typeof body.roomId === "string" ? body.roomId : undefined, startsAt: String(body.startsAt ?? ""), endsAt: String(body.endsAt ?? ""), source: typeof body.source === "string" ? body.source : undefined }) }); } catch { return NextResponse.json({ message: "Unable to update blocked time." }, { status: 400 }); } }
+export async function DELETE(request: NextRequest, context: Context) { const resolved = await resolve(request, context); if (resolved instanceof Response) return resolved; await createSchedulingService().cancelBlockedTime(resolved.scope.clinicId, resolved.id); return new NextResponse(null, { status: 204 }); }

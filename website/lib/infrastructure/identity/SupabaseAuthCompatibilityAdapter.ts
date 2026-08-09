@@ -8,7 +8,7 @@ import { supabaseServer } from "@/lib/supabase-server";
 import { createProxyClient } from "@/lib/supabase/proxy";
 
 export interface CompatibilityIdentity { userId: string; tenantId: string; clinicId: string; roleCodes: readonly string[]; permissionCodes: readonly string[]; }
-const roleMap: Record<string, string> = { super_admin: "super-admin", owner: "clinic-owner", manager: "practice-manager", receptionist: "receptionist", dentist: "dentist" };
+const roleMap: Record<string, string> = { super_admin: "super-admin", owner: "clinic-owner", manager: "practice-manager", receptionist: "receptionist", dentist: "dentist", doctor: "dentist" };
 
 export async function getCompatibilityIdentity(request: NextRequest) {
   const proxyClient = createProxyClient(request);

@@ -1,0 +1,9 @@
+import { NextRequest, NextResponse } from "next/server";
+import { requireAnyPermission } from "@/lib/infrastructure/identity/AuthorizationContext";
+import { Permissions } from "@/lib/platform/domain/identity";
+import { resolveSchedulingDoctor } from "@/lib/scheduling/authorization";
+import { createSchedulingService } from "@/lib/scheduling/service";
+type Context = { params: Promise<{ id: string; leaveId: string }> };
+async function resolve(request: NextRequest, context: Context) { const auth = requireAnyPermission(request, [Permissions.LeaveUpdate, Permissions.CalendarUpdateOwn]); if (auth instanceof Response) return auth; try { const params = await context.params; return { scope: await resolveSchedulingDoctor(auth, params.id, request.nextUrl.searchParams.get("clinicId")), id: params.leaveId }; } catch { return NextResponse.json({ message: "Doctor leave access is not permitted." }, { status: 403 }); } }
+export async function PATCH(request: NextRequest, context: Context) { const resolved = await resolve(request, context); if (resolved instanceof Response) return resolved; try { const body = await request.json() as Record<string, unknown>; return NextResponse.json({ leave: await createSchedulingService().updateLeave(resolved.scope.clinicId, resolved.id, { startsOn: String(body.startsOn ?? ""), endsOn: String(body.endsOn ?? ""), reason: typeof body.reason === "string" ? body.reason : undefined }) }); } catch { return NextResponse.json({ message: "Unable to update leave." }, { status: 400 }); } }
+export async function DELETE(request: NextRequest, context: Context) { const resolved = await resolve(request, context); if (resolved instanceof Response) return resolved; await createSchedulingService().cancelLeave(resolved.scope.clinicId, resolved.id); return new NextResponse(null, { status: 204 }); }

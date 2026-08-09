@@ -104,6 +104,9 @@ export async function listAppointments(
       filters.phone
     );
   }
+  if (filters?.doctorId) query = query.eq("doctor_id", filters.doctorId);
+  if (filters?.serviceId) query = query.eq("service_id", filters.serviceId);
+  if (filters?.roomId) query = query.eq("room_id", filters.roomId);
 
   const { data, error } = await query;
 
@@ -152,6 +155,12 @@ export async function updateAppointment(
 
   if (input.source !== undefined)
     updates.source = input.source;
+  if (input.doctorId !== undefined) updates.doctor_id = input.doctorId;
+  if (input.serviceId !== undefined) updates.service_id = input.serviceId;
+  if (input.roomId !== undefined) updates.room_id = input.roomId;
+  if (input.durationMinutes !== undefined) updates.duration_minutes = input.durationMinutes;
+  if (input.checkedInAt !== undefined) updates.checked_in_at = input.checkedInAt;
+  if (input.completedAt !== undefined) updates.completed_at = input.completedAt;
 
   const { data, error } = await supabaseServer
     .from(TABLE)

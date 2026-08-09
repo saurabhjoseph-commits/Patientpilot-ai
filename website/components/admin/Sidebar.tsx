@@ -46,6 +46,12 @@ const navigation = [
     icon: CalendarDays,
   },
   {
+    name: "Calendar",
+    href: "/admin/calendar",
+    icon: CalendarDays,
+    requiresCalendarRead: true,
+  },
+  {
     name: "Doctors",
     href: "/admin/doctors",
     icon: Stethoscope,
@@ -82,11 +88,13 @@ const navigation = [
 export default function Sidebar({
   canViewClinics,
   canViewDoctors,
+  canViewCalendar,
   canManageGlobal,
   onNavigate,
 }: {
   canViewClinics: boolean;
   canViewDoctors: boolean;
+  canViewCalendar: boolean;
   canManageGlobal: boolean;
   onNavigate?: () => void;
 }) {
@@ -113,6 +121,7 @@ export default function Sidebar({
           {navigation.filter((item) =>
             (!item.requiresClinicRead || canViewClinics) &&
             (!item.requiresDoctorsRead || canViewDoctors) &&
+            (!item.requiresCalendarRead || canViewCalendar) &&
             (!item.requiresGlobalManagement || canManageGlobal),
           ).map((item) => {
             const Icon = item.icon;

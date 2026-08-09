@@ -2,6 +2,7 @@ import { supabaseServer } from "@/lib/supabase-server";
 import { ResponsiveTable } from "@/components/ui/responsive";
 import { requireAdminPagePermission } from "@/lib/auth-server";
 import { Permissions } from "@/lib/platform/domain/identity";
+import Link from "next/link";
 
 export default async function AppointmentsPage() {
   const identity = await requireAdminPagePermission(Permissions.AppointmentsRead);
@@ -13,7 +14,8 @@ export default async function AppointmentsPage() {
 
   return (
     <main className="space-y-8">
-      <div>
+      <div className="flex items-start justify-between gap-4">
+        <div>
         <h1 className="text-4xl font-bold">
           Appointments
         </h1>
@@ -21,6 +23,8 @@ export default async function AppointmentsPage() {
         <p className="mt-2 text-slate-500">
           AI Receptionist bookings
         </p>
+        </div>
+        {identity.permissionCodes.includes(Permissions.AppointmentsCreate) && <Link href="/admin/appointments/new" className="min-h-11 rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white">New appointment</Link>}
       </div>
 
       <div className="rounded-2xl border bg-white shadow">
@@ -95,6 +99,7 @@ export default async function AppointmentsPage() {
                     appointment.created_at
                   ).toLocaleDateString()}
                 </td>
+                <td className="p-4"><Link className="text-sm font-medium text-blue-600 hover:underline" href={`/admin/appointments/${appointment.id}`}>Open</Link></td>
               </tr>
             ))}
           </tbody>

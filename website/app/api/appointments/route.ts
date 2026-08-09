@@ -70,6 +70,12 @@ export async function POST(
         // The historical appointment_type/reason request fields mean the requested service.
         service: readString(input.appointment_type) ?? readString(input.service) ?? readString(input.reason) ?? "",
         notes: readString(input.notes),
+        source: readString(input.source),
+        status: readString(input.status),
+        doctorId: readString(input.doctor_id) ?? readString(input.doctorId),
+        serviceId: readString(input.service_id) ?? readString(input.serviceId),
+        roomId: readString(input.room_id) ?? readString(input.roomId),
+        durationMinutes: typeof input.duration_minutes === "number" ? input.duration_minutes : typeof input.durationMinutes === "number" ? input.durationMinutes : undefined,
       });
 
     return NextResponse.json(

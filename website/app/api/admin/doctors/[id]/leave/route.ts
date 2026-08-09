@@ -1,0 +1,9 @@
+import { NextRequest, NextResponse } from "next/server";
+import { requireAnyPermission } from "@/lib/infrastructure/identity/AuthorizationContext";
+import { Permissions } from "@/lib/platform/domain/identity";
+import { createSchedulingService } from "@/lib/scheduling/service";
+import { resolveSchedulingDoctor } from "@/lib/scheduling/authorization";
+
+const scope = async (request: NextRequest, params: Promise<{ id: string }>, permissions: readonly (typeof Permissions)[keyof typeof Permissions][]) => { const auth = requireAnyPermission(request, permissions); if (auth instanceof Response) return auth; try { return await resolveSchedulingDoctor(auth, (await params).id, request.nextUrl.searchParams.get("clinicId")); } catch { return NextResponse.json({ message: "Doctor leave access is not permitted." }, { status: 403 }); } };
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) { const resolved = await scope(request, params, [Permissions.LeaveRead, Permissions.CalendarReadOwn]); if (resolved instanceof Response) return resolved; return NextResponse.json({ leave: await createSchedulingService().leaves(resolved.clinicId, resolved.doctorId) }); }
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) { const resolved = await scope(request, params, [Permissions.LeaveUpdate, Permissions.CalendarUpdateOwn]); if (resolved instanceof Response) return resolved; try { const body = await request.json() as Record<string, unknown>; return NextResponse.json({ leave: await createSchedulingService().addLeave(resolved.clinicId, resolved.doctorId, { startsOn: String(body.startsOn ?? ""), endsOn: String(body.endsOn ?? ""), reason: typeof body.reason === "string" ? body.reason : undefined }) }, { status: 201 }); } catch { return NextResponse.json({ message: "Unable to save leave." }, { status: 400 }); } }

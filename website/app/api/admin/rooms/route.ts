@@ -1,0 +1,7 @@
+import { NextRequest, NextResponse } from "next/server";
+import { resolveDoctorClinic } from "@/lib/doctors/clinic-context";
+import { createSchedulingService } from "@/lib/scheduling/service";
+import { requirePermission } from "@/lib/infrastructure/identity/AuthorizationContext";
+import { Permissions } from "@/lib/platform/domain/identity";
+export async function GET(request: NextRequest) { const auth = requirePermission(request, Permissions.RoomsRead); if (auth instanceof Response) return auth; const clinicId = await resolveDoctorClinic(auth, request.nextUrl.searchParams.get("clinicId")); return NextResponse.json({ rooms: await createSchedulingService().rooms(clinicId) }); }
+export async function POST(request: NextRequest) { const auth = requirePermission(request, Permissions.RoomsUpdate); if (auth instanceof Response) return auth; try { const body = await request.json() as Record<string, unknown>; const clinicId = await resolveDoctorClinic(auth, typeof body.clinicId === "string" ? body.clinicId : undefined); const room = await createSchedulingService().saveRoom(clinicId, { name: String(body.name ?? ""), code: typeof body.code === "string" ? body.code : undefined, active: body.active !== false }); return NextResponse.json({ room }, { status: 201 }); } catch (error) { return NextResponse.json({ message: error instanceof Error ? error.message : "Unable to save room." }, { status: 400 }); } }
