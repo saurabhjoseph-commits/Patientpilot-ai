@@ -12,7 +12,9 @@ test("India launch clinic, demo, mobile header, and strict-schema routes remain 
   assert.equal(existsSync(new URL("../lib/supabase/migrations/0009_india_clinic_onboarding.sql", import.meta.url)), true);
   assert.match(read("components/admin/DemoLauncher.tsx"), /href="\/admin\/demo"/);
   assert.equal(existsSync(new URL("../app/admin/demo/page.tsx", import.meta.url)), true);
-  assert.match(read("components/Header.tsx"), /bg-gradient-to-r[\s\S]*backdrop-blur-xl[\s\S]*mix-blend-multiply/);
+  const publicHeader = read("components/Header.tsx");
+  assert.match(publicHeader, /border-slate-200 bg-white/);
+  assert.doesNotMatch(publicHeader, /mix-blend/);
   assert.match(read("lib/ai/schema.ts"), /"appointment"/);
 });
 

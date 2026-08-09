@@ -76,7 +76,7 @@ export default function ROICalculator() {
 
             <div className="mb-10">
               <div className="flex justify-between mb-3">
-                <span className="font-semibold">
+                <span className="font-semibold text-slate-900">
                   Monthly Missed Calls
                 </span>
 
@@ -99,7 +99,7 @@ export default function ROICalculator() {
 
             <div className="mb-10">
               <div className="flex justify-between mb-3">
-                <span className="font-semibold">
+                <span className="font-semibold text-slate-900">
                   Average New Patient Value
                 </span>
 
@@ -124,7 +124,7 @@ export default function ROICalculator() {
             <div>
 
               <div className="flex justify-between mb-3">
-                <span className="font-semibold">
+                <span className="font-semibold text-slate-900">
                   AI Recovery Rate
                 </span>
 

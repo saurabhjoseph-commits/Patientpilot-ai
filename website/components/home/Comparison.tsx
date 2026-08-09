@@ -7,13 +7,13 @@ export default function Comparison() {
             Why PatientPilot AI?
           </span>
 
-          <h2 className="mt-6 text-4xl font-bold">
+          <h2 className="mt-6 text-4xl font-bold text-slate-900">
             Traditional Receptionist vs PatientPilot AI
           </h2>
         </div>
 
         <div className="mt-12 overflow-hidden rounded-2xl border shadow-lg">
-          <table className="w-full">
+          <table className="w-full text-slate-900">
             <thead className="bg-blue-600 text-white">
               <tr>
                 <th className="p-5 text-left">Traditional Receptionist</th>
@@ -23,28 +23,28 @@ export default function Comparison() {
 
             <tbody className="bg-white">
               <tr className="border-b">
-                <td className="p-5">Works only during office hours</td>
-                <td className="p-5">Available 24/7</td>
+                <td className="p-5 text-slate-700">Works only during office hours</td>
+                <td className="p-5 text-slate-700">Available 24/7</td>
               </tr>
 
               <tr className="border-b">
-                <td className="p-5">Misses calls after hours</td>
-                <td className="p-5">Never misses a patient call</td>
+                <td className="p-5 text-slate-700">Misses calls after hours</td>
+                <td className="p-5 text-slate-700">Never misses a patient call</td>
               </tr>
 
               <tr className="border-b">
-                <td className="p-5">Requires salary & benefits</td>
-                <td className="p-5">Affordable monthly subscription</td>
+                <td className="p-5 text-slate-700">Requires salary & benefits</td>
+                <td className="p-5 text-slate-700">Affordable monthly subscription</td>
               </tr>
 
               <tr className="border-b">
-                <td className="p-5">Needs vacations & sick leave</td>
-                <td className="p-5">Always available</td>
+                <td className="p-5 text-slate-700">Needs vacations & sick leave</td>
+                <td className="p-5 text-slate-700">Always available</td>
               </tr>
 
               <tr>
-                <td className="p-5">Manual appointment scheduling</td>
-                <td className="p-5">Automatic appointment booking</td>
+                <td className="p-5 text-slate-700">Manual appointment scheduling</td>
+                <td className="p-5 text-slate-700">Automatic appointment booking</td>
               </tr>
             </tbody>
           </table>

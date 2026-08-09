@@ -85,7 +85,7 @@ export default function FeatureComparison() {
 
         <div className="mt-16 overflow-hidden rounded-3xl bg-white shadow-xl">
 
-          <table className="w-full">
+          <table className="w-full text-slate-900">
 
             <thead className="bg-blue-600 text-white">
               <tr>
@@ -103,7 +103,7 @@ export default function FeatureComparison() {
                   key={item.feature}
                   className="border-b last:border-none"
                 >
-                  <td className="p-5 font-medium">
+                  <td className="p-5 font-medium text-slate-900">
                     {item.feature}
                   </td>
 

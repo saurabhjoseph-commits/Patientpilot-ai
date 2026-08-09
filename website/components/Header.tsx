@@ -17,7 +17,7 @@ export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 border-b border-sky-200/70 bg-gradient-to-r from-sky-100/95 via-white/90 to-blue-50/95 shadow-[0_8px_24px_rgba(15,23,42,0.08)] backdrop-blur-xl md:border-slate-200 md:bg-white/90 md:shadow-none md:backdrop-blur-md">
+    <header className="fixed top-0 left-0 right-0 z-50 border-b border-slate-200 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.08)] md:bg-white/90 md:shadow-none md:backdrop-blur-md">
       <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-4 sm:px-6 md:h-20">
         {/* Logo */}
         <Link href="/" className="flex h-full items-center overflow-hidden" aria-label="PatientPilot AI home">
@@ -27,7 +27,7 @@ export default function Header() {
             width={350}
             height={120}
             priority
-            className="h-14 w-auto object-contain mix-blend-multiply md:h-20 md:mix-blend-normal"
+            className="h-12 w-auto object-contain md:h-20"
           />
         </Link>
 
@@ -69,7 +69,7 @@ export default function Header() {
 
       {/* Mobile Menu */}
       {mobileOpen && (
-        <div id="mobile-navigation" className="border-t border-sky-100 bg-gradient-to-b from-white/95 to-sky-50/95 shadow-lg backdrop-blur-xl md:hidden">
+        <div id="mobile-navigation" className="border-t border-slate-200 bg-white shadow-lg md:hidden">
           <nav className="flex flex-col p-6">
             {navItems.map((item) => (
               <Link

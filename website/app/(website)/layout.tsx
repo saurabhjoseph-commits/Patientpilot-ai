@@ -7,7 +7,7 @@ export default function WebsiteLayout({
   children: React.ReactNode;
 }) {
   return (
-    <>
+    <div className="public-site min-h-screen bg-white text-slate-900">
       <Header />
 
       <main className="min-h-screen pt-[72px] md:pt-20">
@@ -15,6 +15,6 @@ export default function WebsiteLayout({
       </main>
 
       <Footer />
-    </>
+    </div>
   );
 }

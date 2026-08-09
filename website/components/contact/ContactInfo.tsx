@@ -12,13 +12,15 @@ export default function ContactInfo() {
     {
       icon: Mail,
       title: "Email",
-      value: "hello@patientpilotai.com",
+      value: "support@patientpilotai.com",
+      href: "mailto:support@patientpilotai.com",
       description: "We'll respond within one business day.",
     },
     {
       icon: Phone,
       title: "Phone",
-      value: "+1 (555) 123-4567",
+      value: "+91 9794898619",
+      href: "tel:+919794898619",
       description: "Monday – Friday, 9:00 AM – 6:00 PM",
     },
     {
@@ -87,9 +89,18 @@ export default function ContactInfo() {
                   {item.title}
                 </h3>
 
-                <p className="mt-3 text-lg font-semibold text-blue-600">
-                  {item.value}
-                </p>
+                {item.href ? (
+                  <a
+                    href={item.href}
+                    className="mt-3 inline-block text-lg font-semibold text-blue-700 hover:text-blue-800 hover:underline"
+                  >
+                    {item.value}
+                  </a>
+                ) : (
+                  <p className="mt-3 text-lg font-semibold text-blue-700">
+                    {item.value}
+                  </p>
+                )}
 
                 <p className="mt-3 text-slate-600 leading-7">
                   {item.description}
