@@ -63,6 +63,22 @@ export async function retryOwnerProfileSetup(clinicId: string): Promise<OwnerOnb
   return updateRecord(record.id, { status: "invited", failure_code: null, last_attempt_at: new Date().toISOString(), attempt_count: record.attempt_count + 1 });
 }
 
+/** Keeps the verified Auth/profile binding and only reopens workflow state. */
+export async function resetOwnerOnboarding(clinicId: string): Promise<OwnerOnboardingRecord> {
+  const record = await requiredRecord(clinicId);
+  if (record.auth_user_id) {
+    const { data: profile, error } = await supabaseServer.from("profiles").select("clinic_id,role").eq("id", record.auth_user_id).maybeSingle();
+    if (error) throw new OwnerOnboardingError("Unable to verify the existing owner profile before reset.");
+    if (profile && (profile.clinic_id !== clinicId || profile.role !== record.role)) {
+      throw new OwnerOnboardingError("The existing Auth/profile mapping is not exclusively verified for this clinic and cannot be reset automatically.");
+    }
+  }
+  return updateRecord(record.id, {
+    status: "pending", invitation_sent_at: null, activation_completed_at: null, failure_code: null,
+    last_attempt_at: new Date().toISOString(), attempt_count: record.attempt_count + 1,
+  });
+}
+
 export async function completeOwnerActivation(authUserId: string): Promise<boolean> {
   const { data, error } = await supabaseServer.from("clinic_owner_onboarding").select(ONBOARDING_COLUMNS).eq("auth_user_id", authUserId).in("status", ["invited", "inviting", "failed"]).order("created_at", { ascending: false }).limit(1).maybeSingle();
   if (error || !data) return false;
