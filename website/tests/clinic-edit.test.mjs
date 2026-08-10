@@ -26,6 +26,13 @@ test("edit page preloads only supported clinic fields and preserves system field
   assert.match(form, /Slug/);
   assert.doesNotMatch(form, /name="slug"/);
   assert.doesNotMatch(form, /name="id"/);
+  assert.match(page, /clinic_settings/);
+  assert.match(page, /normalizeClinicBusinessHours/);
+  assert.match(form, /Business Hours/);
+  assert.match(form, /BUSINESS_HOUR_DAYS/);
+  assert.match(form, /disabled=\{saving \|\| !schedule\.enabled\}/);
+  assert.match(form, /Clinic operating hours are stored separately from individual doctor schedules/);
+  assert.doesNotMatch(form, /Postal|ZIP/);
 });
 
 test("clinic update route is permissioned, clinic-scoped, and mass-assignment safe", () => {
@@ -38,7 +45,32 @@ test("clinic update route is permissioned, clinic-scoped, and mass-assignment sa
   assert.match(route, /\.eq\("id", id\)/);
   assert.doesNotMatch(route, /\.update\(input\)/);
   assert.doesNotMatch(route, /slug:/);
-  assert.doesNotMatch(route, /clinic_id:/);
+  assert.doesNotMatch(route, /input\.clinic_id/);
+  assert.match(route, /officeHours/);
+  assert.match(route, /validateClinicBusinessHours/);
+  assert.match(route, /Clinic changes were reverted/);
+  assert.match(route, /clinicSnapshot/);
+  assert.match(route, /bookingPolicyToPersistence/);
+  assert.match(route, /validateClinicBookingPolicy/);
+});
+
+test("clinic settings save redirects only after all supported sections succeed", () => {
+  const form = read("components/admin/ClinicEditForm.tsx");
+  assert.match(form, /router\.replace\("\/admin\/clinics"\)/);
+  assert.match(form, /if \(!response\.ok\)/);
+  assert.match(form, /router\.push\("\/admin\/clinics"\)/);
+  assert.match(form, /if \(saving\) return/);
+  assert.match(form, /validateClinicBusinessHours\(hours\)/);
+  assert.match(form, /Booking Policy/);
+});
+
+test("business-hours contract normalizes stored JSONB and rejects invalid open ranges", () => {
+  const hours = read("lib/clinic/models/business-hours.ts");
+  assert.match(hours, /normalizeClinicBusinessHours/);
+  assert.match(hours, /validateClinicBusinessHours/);
+  assert.match(hours, /schedule\.open >= schedule\.close/);
+  assert.match(hours, /BUSINESS_HOUR_DAYS/);
+  assert.doesNotMatch(hours, /doctor_schedules/);
 });
 
 test("existing Add Clinic flow remains present and separately permissioned", () => {
