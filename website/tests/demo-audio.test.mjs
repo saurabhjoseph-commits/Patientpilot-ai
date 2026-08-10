@@ -16,9 +16,9 @@ test("demo audio starts ringtone in the ringing stage and stops before connectio
 test("demo audio speaks revealed scenario AI and patient text", () => {
   const provider = read("components/demo/live/DemoProvider.tsx");
   const speech = read("lib/demo/audio/speech.ts");
-  assert.match(provider, /currentMessage\.text/);
-  assert.match(provider, /currentMessage\.speaker/);
-  assert.match(provider, /currentMessage\.speaker === "system"/);
+  assert.match(provider, /step\.message\.text/);
+  assert.match(provider, /step\.message\.speaker/);
+  assert.match(provider, /step\.message\.speaker !== "system"/);
   assert.match(speech, /speaker === "ai"/);
   assert.match(speech, /patientVoice/);
   assert.match(speech, /speechSynthesis\.speak/);

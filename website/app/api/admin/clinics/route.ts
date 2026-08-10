@@ -4,6 +4,7 @@ import { validateClinicOnboarding, normalizeClinicSlug, type ClinicOnboardingPay
 import { requirePermission } from "@/lib/infrastructure/identity/AuthorizationContext";
 import { Permissions } from "@/lib/platform/domain/identity";
 import { supabaseServer } from "@/lib/supabase-server";
+import { assertOwnerOnboardingReady, OwnerOnboardingError, startOwnerOnboarding } from "@/lib/clinic/owner-onboarding";
 
 export async function POST(request: NextRequest) {
   const authorization = requirePermission(request, Permissions.ClinicUpdate);
@@ -14,6 +15,12 @@ export async function POST(request: NextRequest) {
   const input = body as ClinicOnboardingPayload;
   const validationError = validateClinicOnboarding(input);
   if (validationError) return NextResponse.json({ message: validationError }, { status: 400 });
+
+  try {
+    await assertOwnerOnboardingReady(input.ownerAccount);
+  } catch (error) {
+    return NextResponse.json({ message: error instanceof Error ? error.message : "Owner onboarding is unavailable." }, { status: error instanceof OwnerOnboardingError ? 503 : 500 });
+  }
 
   const slug = normalizeClinicSlug(input.slug);
   const { data, error } = await supabaseServer.rpc("create_clinic_with_settings", {
@@ -31,5 +38,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: duplicate ? "A clinic with this slug already exists." : "Unable to create clinic." }, { status: duplicate ? 409 : 500 });
   }
   const clinic = Array.isArray(data) ? data[0] : data;
-  return NextResponse.json({ id: clinic?.id, slug }, { status: 201 });
+  if (!clinic?.id) return NextResponse.json({ message: "Clinic was created without an identifier. Administrator recovery is required." }, { status: 500 });
+  try {
+    const onboarding = await startOwnerOnboarding(clinic.id, input.ownerAccount);
+    const partial = onboarding.status === "failed";
+    return NextResponse.json({ id: clinic.id, slug, onboarding: { status: onboarding.status, failureCode: onboarding.failure_code } }, { status: partial ? 202 : 201 });
+  } catch (error) {
+    return NextResponse.json({ id: clinic.id, slug, onboarding: { status: "failed" }, message: error instanceof Error ? error.message : "Clinic created but owner onboarding requires administrator recovery." }, { status: 202 });
+  }
 }

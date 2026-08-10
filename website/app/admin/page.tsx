@@ -17,9 +17,12 @@ import DemoLauncher from "@/components/admin/DemoLauncher";
 import CallCenterDashboard from "@/components/call-center/CallCenterDashboard";
 import { requireAdminPagePermission } from "@/lib/auth-server";
 import { Permissions } from "@/lib/platform/domain/identity";
+import { getClinicOperationalReadiness } from "@/lib/clinic/operational-readiness";
+import Link from "next/link";
 
 export default async function AdminPage() {
   const identity = await requireAdminPagePermission(Permissions.DashboardRead);
+  const ownerReadiness = identity.roleCodes.includes("clinic-owner") ? await getClinicOperationalReadiness(identity.clinicId) : null;
   const { data: contacts, error } =
     await supabaseServer
       .from("contacts")
@@ -63,6 +66,7 @@ export default async function AdminPage() {
   return (
     <main className="min-h-screen bg-slate-100 p-8">
       <div className="mx-auto max-w-7xl space-y-8">
+        {ownerReadiness && !ownerReadiness.h3Ready && <section className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900"><p className="font-semibold">Complete your clinic&apos;s AI Booking Setup</p><p className="mt-1">{ownerReadiness.readyCount} of {ownerReadiness.requiredCount} readiness checks are complete.</p><Link href={`/admin/clinics/${identity.clinicId}`} className="mt-3 inline-flex min-h-11 items-center rounded-lg bg-blue-600 px-4 font-medium text-white">Open clinic setup</Link></section>}
         <DashboardFilters />
 
         <DemoLauncher />

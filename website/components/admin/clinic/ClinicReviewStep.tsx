@@ -7,6 +7,7 @@ import {
   Clock,
   MapPin,
   Phone,
+  UserRound,
 } from "lucide-react";
 
 import type {
@@ -16,6 +17,7 @@ import type {
   ClinicBusinessHours,
   ClinicContact,
 } from "@/lib/clinic/models";
+import type { ClinicOwnerAccount } from "@/lib/clinic/owner-account";
 
 export interface ClinicReviewData {
   basicInfo: ClinicBasicInfo;
@@ -23,6 +25,7 @@ export interface ClinicReviewData {
   contact: ClinicContact;
   businessHours: ClinicBusinessHours;
   aiSettings: ClinicAISettings;
+  ownerAccount: ClinicOwnerAccount;
 }
 
 interface ClinicReviewStepProps {
@@ -88,6 +91,8 @@ export default function ClinicReviewStep({
           value={value.basicInfo.phone || "-"}
         />
       </ReviewCard>
+
+      <ReviewCard icon={<UserRound className="h-5 w-5" />} title="Owner account"><Item label="Owner" value={value.ownerAccount.fullName} /><Item label="Login email" value={value.ownerAccount.email} /><Item label="Role" value={value.ownerAccount.role} /><Item label="Activation email" value={value.ownerAccount.sendInvitation ? "Send now" : "Pending"} /></ReviewCard>
 
       <ReviewCard
         icon={<MapPin className="h-5 w-5" />}

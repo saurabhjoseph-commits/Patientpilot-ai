@@ -8,6 +8,7 @@ import { serviceRegistry } from "@/lib/infrastructure/dependency-injection/Servi
 import { PasswordHasher } from "@/lib/infrastructure/identity/PasswordHasher";
 import { PasswordHash } from "@/lib/platform/domain/identity";
 import { supabaseServer } from "@/lib/supabase-server";
+import { completeOwnerActivation } from "@/lib/clinic/owner-onboarding";
 
 export async function POST(request: NextRequest) {
   const body: unknown = await request.json().catch(() => null);
@@ -26,6 +27,10 @@ export async function POST(request: NextRequest) {
     const { data, error } = await supabaseServer.auth.getUser(accessToken);
     if (error || !data.user.email) {
       return NextResponse.json({ error: "Unable to complete password reset." }, { status: 401 });
+    }
+
+    if (await completeOwnerActivation(data.user.id)) {
+      return NextResponse.json({ success: true });
     }
 
     bootstrapInfrastructure();

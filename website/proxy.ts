@@ -15,6 +15,7 @@ export async function proxy(request: NextRequest) {
   const compatibility = identity ? null : await getCompatibilityIdentity(request);
   identity ??= compatibility?.identity ?? null;
   if (!identity) return unauthenticated(request, isApi);
+  if (compatibility?.identity?.requiresPasswordChange) return isApi ? NextResponse.json({ error: "Password change required" }, { status: 403 }) : NextResponse.redirect(new URL("/set-password", request.url));
   const headers = new Headers(request.headers);
   headers.set("x-identity-user-id", identity.userId);
   headers.set("x-identity-tenant-id", identity.tenantId);

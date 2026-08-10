@@ -8,6 +8,7 @@ export type RoomAssignmentInput = { roomId: string; effectiveFrom?: string; effe
 export type ScheduleRow = { id: string; weekday: number; start_time: string; end_time: string; break_start_time: string | null; break_end_time: string | null; effective_from: string | null; effective_to: string | null; timezone: string; active: boolean };
 export type LeaveRow = { id: string; starts_on: string; ends_on: string; reason: string | null; active: boolean; created_at: string };
 export type RoomAssignmentRow = { id: string; room_id: string; effective_from: string | null; effective_to: string | null; active: boolean; created_at: string };
+export type ClinicRoomAssignmentRow = RoomAssignmentRow & { doctor_id: string };
 
 export class SchedulingRepository {
   async schedules(clinicId: string, doctorId: string): Promise<ScheduleRow[]> { const { data, error } = await supabaseServer.from("doctor_schedules").select("id,weekday,start_time,end_time,break_start_time,break_end_time,effective_from,effective_to,timezone,active").eq("clinic_id", clinicId).eq("doctor_id", doctorId).order("weekday"); if (error) throw error; return (data ?? []) as unknown as ScheduleRow[]; }
@@ -32,6 +33,7 @@ export class SchedulingRepository {
   async cancelBlockedTime(clinicId: string, id: string) { return this.update("blocked_time", clinicId, id, { active: false }); }
 
   async roomAssignments(clinicId: string, doctorId: string): Promise<RoomAssignmentRow[]> { const { data, error } = await supabaseServer.from("doctor_room_assignments").select("id,room_id,effective_from,effective_to,active,created_at").eq("clinic_id", clinicId).eq("doctor_id", doctorId).order("created_at"); if (error) throw error; return (data ?? []) as unknown as RoomAssignmentRow[]; }
+  async roomAssignmentsForClinic(clinicId: string): Promise<ClinicRoomAssignmentRow[]> { const { data, error } = await supabaseServer.from("doctor_room_assignments").select("id,doctor_id,room_id,effective_from,effective_to,active,created_at").eq("clinic_id", clinicId).order("created_at", { ascending: false }); if (error) throw error; return (data ?? []) as unknown as ClinicRoomAssignmentRow[]; }
   async addRoomAssignment(clinicId: string, doctorId: string, input: RoomAssignmentInput) { await this.assertRoomInClinic(clinicId, input.roomId); return this.insert("doctor_room_assignments", { clinic_id: clinicId, doctor_id: doctorId, room_id: input.roomId, effective_from: input.effectiveFrom || null, effective_to: input.effectiveTo || null, active: true }); }
   async updateRoomAssignment(clinicId: string, id: string, input: RoomAssignmentInput) { await this.assertRoomInClinic(clinicId, input.roomId); return this.update("doctor_room_assignments", clinicId, id, { room_id: input.roomId, effective_from: input.effectiveFrom || null, effective_to: input.effectiveTo || null }); }
   async endRoomAssignment(clinicId: string, id: string, effectiveTo: string) { return this.update("doctor_room_assignments", clinicId, id, { active: false, effective_to: effectiveTo }); }

@@ -16,6 +16,7 @@ export class SchedulingService {
   async updateBlockedTime(clinicId: string, id: string, input: BlockInput) { this.assert(validateBlock(input)); return this.repository.updateBlockedTime(clinicId, id, input); }
   cancelBlockedTime(clinicId: string, id: string) { return this.repository.cancelBlockedTime(clinicId, id); }
   roomAssignments(clinicId: string, doctorId: string) { return this.repository.roomAssignments(clinicId, doctorId); }
+  roomAssignmentsForClinic(clinicId: string) { return this.repository.roomAssignmentsForClinic(clinicId); }
   async addRoomAssignment(clinicId: string, doctorId: string, input: RoomAssignmentInput) { this.assert(validateRoomAssignment(input)); return this.repository.addRoomAssignment(clinicId, doctorId, input); }
   async updateRoomAssignment(clinicId: string, id: string, input: RoomAssignmentInput) { this.assert(validateRoomAssignment(input)); return this.repository.updateRoomAssignment(clinicId, id, input); }
   async endRoomAssignment(clinicId: string, id: string, effectiveTo: string) { if (!effectiveTo) throw new Error("An assignment end date is required."); return this.repository.endRoomAssignment(clinicId, id, effectiveTo); }

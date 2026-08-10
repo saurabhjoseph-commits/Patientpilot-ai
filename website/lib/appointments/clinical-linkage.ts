@@ -8,7 +8,9 @@ export async function resolveClinicalLinkage(input: CreateAppointmentInput): Pro
   const { data: service, error: serviceError } = await supabaseServer.from("clinic_services").select("id,default_duration_minutes").eq("clinic_id", input.clinicId).eq("id", linkage.serviceId).maybeSingle();
   if (serviceError) throw serviceError;
   if (!service) throw new Error("Selected service does not belong to this clinic.");
-  let durationMinutes = linkage.durationMinutes ?? service.default_duration_minutes;
+  // Linked appointments derive duration from trusted clinic configuration.
+  // A browser payload must not override the clinic-service default.
+  let durationMinutes = service.default_duration_minutes;
   if (linkage.doctorId) {
     const { data: doctor, error: doctorError } = await supabaseServer.from("doctors").select("id").eq("clinic_id", input.clinicId).eq("id", linkage.doctorId).eq("status", "active").maybeSingle();
     if (doctorError) throw doctorError;

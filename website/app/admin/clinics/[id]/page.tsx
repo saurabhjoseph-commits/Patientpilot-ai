@@ -9,6 +9,9 @@ import { normalizeClinicBusinessHours } from "@/lib/clinic/models/business-hours
 import { bookingPolicyFromPersistence } from "@/lib/clinic/booking-policy";
 import { getClinicOperationalReadiness } from "@/lib/clinic/operational-readiness";
 import ClinicOperationalReadiness from "@/components/admin/ClinicOperationalReadiness";
+import OwnerOnboardingCard from "@/components/admin/OwnerOnboardingCard";
+import { getOwnerOnboarding, isOwnerOnboardingAvailable } from "@/lib/clinic/owner-onboarding";
+import ClinicDangerZone from "@/components/admin/ClinicDangerZone";
 
 export default async function ClinicPage({ params }: { params: Promise<{ id: string }> }) {
   const authorization = await requireAdminPagePermission(Permissions.ClinicUpdate);
@@ -18,7 +21,7 @@ export default async function ClinicPage({ params }: { params: Promise<{ id: str
     notFound();
   }
 
-  const [{ data, error }, settingsResult, readiness] = await Promise.all([
+  const [{ data, error }, settingsResult, readiness, onboarding, onboardingAvailable] = await Promise.all([
     supabaseServer
     .from("clinics")
     .select("id,name,email,phone,website,address,city,state,country,timezone,slug,created_at")
@@ -30,6 +33,8 @@ export default async function ClinicPage({ params }: { params: Promise<{ id: str
       .eq("clinic_id", id)
       .maybeSingle(),
     getClinicOperationalReadiness(id),
+    getOwnerOnboarding(id),
+    isOwnerOnboardingAvailable(),
   ]);
 
   if (error) throw new Error("Unable to load clinic.");
@@ -47,12 +52,14 @@ export default async function ClinicPage({ params }: { params: Promise<{ id: str
         <p className="text-sm text-muted-foreground">Manage clinic identity and operational information.</p>
       </div>
       <ClinicOperationalReadiness readiness={readiness} />
+      <OwnerOnboardingCard clinicId={id} clinicName={data.name} onboarding={onboarding} canUpdate={authorization.permissionCodes.includes(Permissions.ClinicUpdate)} canReset={canManageDoctorsGlobally(authorization)} available={onboardingAvailable} />
       <ClinicEditForm
         clinic={data}
         officeHours={normalizeClinicBusinessHours(settingsRow.office_hours)}
         bookingPolicy={bookingPolicyFromPersistence(settingsRow)}
         policyAvailable={!settingsResult.error}
       />
+      <ClinicDangerZone clinicId={id} clinicName={data.name} canDelete={canManageDoctorsGlobally(authorization)} />
     </main>
   );
 }

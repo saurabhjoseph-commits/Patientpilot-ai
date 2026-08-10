@@ -10,7 +10,7 @@ export class BrowserDemoAudioManager implements DemoAudioManager {
   playRingtone() { return !this.muted && this.tones.playRingtone(); }
   stopRingtone() { this.tones.stopRingtone(); }
   playConnectTone() { return !this.muted && this.tones.connect(); }
-  speak(text: string, speaker: DemoSpeaker) { return !this.muted && this.speech.speak(text, speaker); }
+  async speak(text: string, speaker: DemoSpeaker) { return this.muted ? false : this.speech.speak(text, speaker); }
   playCompletionTone() { return !this.muted && this.tones.complete(); }
   stopAll() { this.tones.stopRingtone(); this.speech.stop(); }
   setMuted(muted: boolean) { this.muted = muted; this.tones.setMuted(muted); this.speech.setMuted(muted); }

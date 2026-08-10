@@ -1,5 +1,11 @@
 # PatientPilot AI Changelog
 
+## Unreleased — J.2.3 staging readiness
+
+- Added staging-only ownership/RLS migration procedure and compatibility checks.
+- Documented server-only public intake and telephony clinic configuration.
+- Documented patient isolation as deferred work; no production migration was applied.
+
 **Document:** CHANGELOG.md  
 **Version:** 1.0.0  
 **Status:** Active Development  

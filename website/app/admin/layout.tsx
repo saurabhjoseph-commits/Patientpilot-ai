@@ -18,6 +18,7 @@ export default async function AdminLayout({
   if (!user) {
     redirect("/login");
   }
+  if ("requiresPasswordChange" in user && user.requiresPasswordChange) redirect("/set-password");
 
   return (
     <AdminShell canViewClinics={user.permissionCodes.includes(Permissions.ClinicRead)} canViewDoctors={user.permissionCodes.includes(Permissions.DoctorsRead)} canViewCalendar={user.permissionCodes.includes(Permissions.CalendarRead) || user.permissionCodes.includes(Permissions.CalendarReadOwn)} canManageGlobal={user.permissionCodes.includes(Permissions.DoctorsManageGlobal)}>

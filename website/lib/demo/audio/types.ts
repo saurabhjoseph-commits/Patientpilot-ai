@@ -4,7 +4,7 @@ export interface DemoAudioManager {
   playRingtone(): boolean;
   stopRingtone(): void;
   playConnectTone(): boolean;
-  speak(text: string, speaker: DemoSpeaker): boolean;
+  speak(text: string, speaker: DemoSpeaker): Promise<boolean>;
   playCompletionTone(): boolean;
   stopAll(): void;
   setMuted(muted: boolean): void;

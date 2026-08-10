@@ -1,3 +1,5 @@
+import { type ClinicOwnerAccount, validateClinicOwnerAccount } from "./owner-account";
+
 export interface ClinicOnboardingPayload {
   name: string;
   slug: string;
@@ -7,6 +9,7 @@ export interface ClinicOnboardingPayload {
   status: "draft" | "active" | "inactive";
   email: string;
   phone: string;
+  ownerAccount: ClinicOwnerAccount;
   website: string;
   addressLine1: string;
   addressLine2: string;
@@ -36,6 +39,8 @@ export function validateClinicOnboarding(input: ClinicOnboardingPayload): string
   if (!input.country.trim() || !input.timezone.trim()) return "Country and timezone are required.";
   if (!input.email.trim() || !/^\S+@\S+\.\S+$/.test(input.email)) return "A valid clinic email is required.";
   if (!input.phone.trim()) return "Clinic phone is required.";
+  const ownerError = validateClinicOwnerAccount(input.ownerAccount);
+  if (ownerError) return ownerError;
   if (!input.addressLine1.trim() || !input.city.trim() || !input.state.trim() || !input.postalCode.trim()) return "Complete the required address fields.";
   return null;
 }

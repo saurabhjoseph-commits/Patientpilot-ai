@@ -3,6 +3,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { bootstrapInfrastructure } from "@/lib/infrastructure/dependency-injection/bootstrap";
 import { createSignInUseCase } from "@/lib/infrastructure/identity/IdentityUseCaseFactory";
 import { setAuthCookies } from "@/lib/infrastructure/identity/AuthCookies";
+import { createRouteHandlerClient } from "@/lib/supabase/route-handler-client";
+import { supabaseServer } from "@/lib/supabase-server";
 
 export async function POST(request: NextRequest) {
   const body: unknown = await request.json();
@@ -16,11 +18,24 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Email and password are required." }, { status: 400 });
   }
 
+  const email = (body as { email: string }).email.trim().toLowerCase();
+  const password = (body as { password: string }).password;
+  const supabaseResponse = NextResponse.json({ success: true });
+  const supabase = createRouteHandlerClient(request, supabaseResponse);
+  const { data: supabaseAuth, error: supabaseError } = await supabase.auth.signInWithPassword({ email, password });
+  if (!supabaseError && supabaseAuth.user) {
+    const { data: profile, error: profileError } = await supabaseServer.from("profiles").select("clinic_id,role").eq("id", supabaseAuth.user.id).maybeSingle();
+    if (profileError || !profile?.clinic_id || !["super_admin", "owner", "manager", "receptionist", "dentist", "doctor"].includes(profile.role)) {
+      return NextResponse.json({ error: "This account is not ready for dashboard access. Contact an administrator." }, { status: 403 });
+    }
+    return supabaseResponse;
+  }
+
   try {
     bootstrapInfrastructure();
     const result = await createSignInUseCase().execute({
-      email: (body as { email: string }).email,
-      password: (body as { password: string }).password,
+      email,
+      password,
       ipAddress: request.headers.get("x-forwarded-for") ?? undefined,
       userAgent: request.headers.get("user-agent") ?? undefined,
     });

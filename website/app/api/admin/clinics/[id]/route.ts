@@ -6,6 +6,8 @@ import { Permissions } from "@/lib/platform/domain/identity";
 import { supabaseServer } from "@/lib/supabase-server";
 import { normalizeClinicBusinessHours, validateClinicBusinessHours } from "@/lib/clinic/models/business-hours";
 import { bookingPolicyToPersistence, type ClinicBookingPolicy, validateClinicBookingPolicy } from "@/lib/clinic/booking-policy";
+import { blockingClinicDependencies, clinicDependencyCounts } from "@/lib/clinic/deletion-safety";
+import { captureClinicDeletionRecipient, createDeletionNotification, deliverDeletionNotification } from "@/lib/clinic/deletion-notification";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -117,4 +119,26 @@ export async function PATCH(
   }
 
   return NextResponse.json({ clinic: data });
+}
+
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const authorization = requirePermission(request, Permissions.ClinicUpdate);
+  if (authorization instanceof Response) return authorization;
+  if (!canManageDoctorsGlobally(authorization)) return NextResponse.json({ message: "Only a super administrator can permanently delete a clinic." }, { status: 403 });
+  const { id } = await params;
+  if (!UUID.test(id)) return NextResponse.json({ message: "Invalid clinic identifier." }, { status: 400 });
+  const body = await request.json().catch(() => null);
+  const { data: clinic, error } = await supabaseServer.from("clinics").select("id,name").eq("id", id).maybeSingle();
+  if (error || !clinic) return NextResponse.json({ message: "Clinic was not found." }, { status: 404 });
+  if (!body || typeof body !== "object" || (body as Record<string, unknown>).confirmation !== clinic.name) return NextResponse.json({ message: "Type the clinic name to confirm permanent deletion." }, { status: 400 });
+  try {
+    const dependencies = blockingClinicDependencies(await clinicDependencyCounts(id, clinic.name));
+    if (dependencies.length) return NextResponse.json({ message: `Clinic cannot be deleted while protected data exists: ${dependencies.join(", ")}. The verified schema has no archive state.`, dependencies }, { status: 409 });
+    const recipient = await captureClinicDeletionRecipient(id, clinic.name);
+    const { error: deleteError } = await supabaseServer.from("clinics").delete().eq("id", id);
+    if (deleteError) return NextResponse.json({ message: "Clinic deletion was refused by the database." }, { status: 409 });
+    const notification = await createDeletionNotification(recipient);
+    const notificationDelivered = notification ? await deliverDeletionNotification(notification) : false;
+    return NextResponse.json({ deleted: true, notification: notification ? (notificationDelivered ? "sent" : "failed") : "unavailable" });
+  } catch (failure) { return NextResponse.json({ message: failure instanceof Error ? failure.message : "Unable to verify clinic deletion safety." }, { status: 500 }); }
 }

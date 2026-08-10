@@ -1,5 +1,9 @@
 # PatientPilot AI Deployment Guide
 
+## J.2.3 staging prerequisite
+
+Do not apply the J.2 ownership package to production. In staging, deploy the clinic-aware application first, run the reviewed migration sequence from `website/docs/database-audit/J2_DEPLOYMENT_RUNBOOK.md`, then set `PUBLIC_INTAKE_CLINIC_ID` to the captured bootstrap UUID and configure `TELEPHONY_CLINIC_PHONE_MAP` before workflow validation. These values are server-only and must not be supplied by browsers.
+
 **Document:** DEPLOYMENT.md  
 **Version:** 1.0.0  
 **Status:** Production  

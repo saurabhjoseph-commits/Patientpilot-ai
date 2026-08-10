@@ -296,7 +296,8 @@ test("clinic onboarding uses India defaults, normalized slugs, and an atomic ser
   assert.match(route, /create_clinic_with_settings/);
   assert.doesNotMatch(route, /tenantId|clinicId|roleCodes/);
   assert.match(wizard, /if \(submitting\) return/);
-  assert.match(wizard, /router\.replace\("\/admin\/clinics\?created=1"\)/);
+  assert.match(wizard, /ownerAccount/);
+  assert.match(wizard, /router\.replace\(createdId/);
   assert.match(migration, /insert into public\.clinics/);
   assert.match(migration, /insert into public\.clinic_settings/);
   assert.match(migration, /security definer/);
@@ -337,10 +338,10 @@ test("password recovery does not log or persist passwords and callback redirects
   assert.doesNotMatch(recoveryRoute, /console\./);
   assert.doesNotMatch(resetPage, /console\.(log|error)[\s\S]*password/i);
   assert.match(callback, /tokenHash/);
-  assert.match(callback, /type !== "recovery"/);
-  assert.match(callback, /next !== "\/reset-password"/);
+  assert.match(callback, /type === "recovery"/);
+  assert.match(callback, /type === "invite"/);
   assert.match(callback, /supabase\.auth\.verifyOtp/);
   assert.match(callback, /token_hash: tokenHash/);
-  assert.match(callback, /type: "recovery"/);
+  assert.match(callback, /type: invitation \? "invite" : "recovery"/);
   assert.doesNotMatch(callback, /console\./);
 });

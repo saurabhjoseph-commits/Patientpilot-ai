@@ -6,6 +6,7 @@ import type { CatalogPermission } from "@/lib/platform/domain/identity";
 import { createClient } from "@/lib/supabase/server";
 import { DefaultRolePolicies } from "@/lib/platform/domain/identity";
 import { supabaseServer } from "@/lib/supabase-server";
+import { requiresOwnerPasswordChange } from "@/lib/clinic/owner-onboarding";
 
 export async function getCurrentUser() {
   const store = await cookies();
@@ -23,7 +24,7 @@ export async function getCurrentUser() {
   const roleMap: Record<string, string> = { super_admin: "super-admin", owner: "clinic-owner", manager: "practice-manager", receptionist: "receptionist", dentist: "dentist", doctor: "dentist" };
   const roleCode = profile?.role ? roleMap[profile.role] : undefined;
   if (!profile?.clinic_id || !roleCode) return null;
-  return { userId: user.id, clinicId: profile.clinic_id, tenantId: profile.clinic_id, roleCodes: [roleCode], permissionCodes: DefaultRolePolicies[roleCode] ?? [] };
+  return { userId: user.id, clinicId: profile.clinic_id, tenantId: profile.clinic_id, roleCodes: [roleCode], permissionCodes: DefaultRolePolicies[roleCode] ?? [], requiresPasswordChange: profile.role === "owner" && await requiresOwnerPasswordChange(user.id) };
 }
 
 export async function isAuthenticated() {

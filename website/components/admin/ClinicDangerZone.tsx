@@ -1,0 +1,9 @@
+"use client";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+export default function ClinicDangerZone({ clinicId, clinicName, canDelete }: { clinicId: string; clinicName: string; canDelete: boolean }) {
+  const router = useRouter(); const [confirmation, setConfirmation] = useState(""); const [message, setMessage] = useState<string | null>(null); const [busy, setBusy] = useState(false);
+  if (!canDelete) return null;
+  async function remove() { setBusy(true); setMessage(null); try { const response = await fetch(`/api/admin/clinics/${clinicId}`, { method: "DELETE", headers: { "content-type": "application/json" }, body: JSON.stringify({ confirmation }) }); const result = await response.json().catch(() => ({})); if (!response.ok) setMessage(typeof result.message === "string" ? result.message : "Clinic was not deleted."); else router.push("/admin/clinics"); } finally { setBusy(false); } }
+  return <section className="rounded-2xl border border-red-200 bg-red-50 p-5"><h2 className="font-semibold text-red-950">Danger zone</h2><p className="mt-1 text-sm text-red-800">Permanent deletion is allowed only for an empty clinic. Historical and operational records are never cascaded.</p><label className="mt-4 block text-sm font-medium text-red-950">Type <span className="font-semibold">{clinicName}</span> to delete</label><div className="mt-2 flex flex-wrap gap-3"><input value={confirmation} onChange={(event) => setConfirmation(event.target.value)} className="min-h-11 min-w-64 rounded-lg border border-red-200 bg-white px-3" /><button type="button" disabled={busy || confirmation !== clinicName} onClick={() => void remove()} className="min-h-11 rounded-lg bg-red-700 px-4 text-sm font-medium text-white disabled:opacity-50">Delete clinic</button></div>{message && <p role="alert" className="mt-3 text-sm text-red-800">{message}</p>}</section>;
+}

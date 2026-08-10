@@ -1,28 +1,29 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createRouteHandlerClient } from "@/lib/supabase/route-handler-client";
 
 export async function GET(request: NextRequest) {
   const tokenHash = request.nextUrl.searchParams.get("token_hash");
   const type = request.nextUrl.searchParams.get("type");
   const next = request.nextUrl.searchParams.get("next");
-  const invalidRecoveryUrl = new URL("/reset-password?error=invalid_recovery_link", request.url);
+  const invalidRecoveryUrl = new URL("/login?error=invalid_activation_link", request.url);
 
-  // This endpoint is intentionally a recovery-only callback. It must not become
-  // an open redirect or accept a token intended for another Supabase flow.
-  if (!tokenHash || type !== "recovery" || next !== "/reset-password") {
+  const recovery = type === "recovery" && next === "/reset-password";
+  const invitation = type === "invite" && next === "/set-password";
+  if (!tokenHash || (!recovery && !invitation)) {
     return NextResponse.redirect(invalidRecoveryUrl);
   }
 
-  const supabase = await createClient();
+  const response = NextResponse.redirect(new URL(next!, request.url));
+  const supabase = createRouteHandlerClient(request, response);
   const { error } = await supabase.auth.verifyOtp({
     token_hash: tokenHash,
-    type: "recovery",
+    type: invitation ? "invite" : "recovery",
   });
 
   // Do not expose or log the token hash. A failed verification is deliberately
   // indistinguishable to the browser from an expired or previously used link.
   if (error) return NextResponse.redirect(invalidRecoveryUrl);
 
-  return NextResponse.redirect(new URL("/reset-password", request.url));
+  return response;
 }
