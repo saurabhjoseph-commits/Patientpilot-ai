@@ -80,3 +80,36 @@ test("existing clinics can start one owner onboarding record without a backfill"
   assert.match(setup, /assertOwnerOnboardingReady/);
   assert.match(setup, /Permissions\.ClinicUpdate/);
 });
+
+test("pending onboarding without an Auth identity uses owner setup rather than resend or profile recovery", () => {
+  const card = read("components/admin/OwnerOnboardingCard.tsx");
+  assert.match(card, /auth_user_id: string \| null/);
+  assert.match(card, /const hasAuthIdentity = Boolean\(onboarding\.auth_user_id\)/);
+  assert.match(card, /Owner account has not been created/);
+  assert.match(card, /Retry Owner Setup/);
+  assert.match(card, /hasAuthIdentity \? <><button[^]*Resend invitation/);
+  assert.match(card, /profileRetryAvailable/);
+});
+
+test("retry owner setup reuses its row, invites Auth, persists the identity and creates its profile", () => {
+  const onboarding = read("lib/clinic/owner-onboarding.ts");
+  const route = read("app/api/admin/clinics/[id]/owner-onboarding/retry-owner-setup/route.ts");
+  assert.match(onboarding, /retryOwnerAuthSetup/);
+  assert.match(onboarding, /if \(record\.auth_user_id\)/);
+  assert.match(onboarding, /authUserExists\(record\.owner_email\)/);
+  assert.match(onboarding, /sendInvitation\(inviting\)/);
+  assert.match(onboarding, /auth\.admin\.inviteUserByEmail/);
+  assert.match(onboarding, /auth_user_id: data\.user\.id/);
+  assert.match(onboarding, /clinic_id: record\.clinic_id/);
+  assert.match(onboarding, /invitation_sent_at/);
+  assert.match(route, /Permissions\.ClinicUpdate/);
+});
+
+test("resend rejects a missing identity with its typed 409 recovery response", () => {
+  const resend = read("app/api/admin/clinics/[id]/owner-onboarding/resend/route.ts");
+  const onboarding = read("lib/clinic/owner-onboarding.ts");
+  assert.match(resend, /OWNER_AUTH_IDENTITY_MISSING/);
+  assert.match(resend, /status: missingIdentity \? 409/);
+  assert.match(onboarding, /OWNER_AUTH_IDENTITY_MISSING/);
+  assert.match(onboarding, /status: "pending"/);
+});
