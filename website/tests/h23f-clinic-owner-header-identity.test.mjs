@@ -27,6 +27,9 @@ test("clinic-scoped dashboard presentation uses authenticated profile name and c
   assert.match(sidebar, /presentation\.dashboardLabel/);
   assert.match(topbar, /presentation\.userName/);
   assert.match(topbar, /presentation\.clinicName/);
+  assert.match(topbar, /const clinicContext = presentation\.isPlatformAdmin \? "PatientPilot AI" : presentation\.clinicName/);
+  assert.match(topbar, /Welcome back, \{presentation\.userName\}/);
+  assert.match(topbar, /text-xs text-slate-400">\{clinicContext\}/);
   assert.match(overview, /Welcome back, \{userName\}/);
   assert.match(overview, /\$\{clinicName\} Dashboard/);
 });
