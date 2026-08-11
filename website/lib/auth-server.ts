@@ -9,6 +9,18 @@ import { supabaseServer } from "@/lib/supabase-server";
 import { requiresOwnerPasswordChange } from "@/lib/clinic/owner-onboarding";
 
 export async function getCurrentUser() {
+  // Supabase Auth plus profiles is the authoritative launch identity. Check it
+  // before legacy cookies so an old platform session cannot impersonate a tenant.
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) {
+    const { data: profile, error } = await supabaseServer.from("profiles").select("clinic_id,role").eq("id", user.id).maybeSingle();
+    if (error) throw error;
+    const roleMap: Record<string, string> = { super_admin: "super-admin", owner: "clinic-owner", manager: "practice-manager", receptionist: "receptionist", dentist: "dentist", doctor: "dentist" };
+    const roleCode = profile?.role ? roleMap[profile.role] : undefined;
+    if (!profile?.clinic_id || !roleCode) return null;
+    return { userId: user.id, clinicId: profile.clinic_id, tenantId: profile.clinic_id, roleCodes: [roleCode], permissionCodes: DefaultRolePolicies[roleCode] ?? [], requiresPasswordChange: profile.role === "owner" && await requiresOwnerPasswordChange(user.id) };
+  }
   const store = await cookies();
   const accessToken = store.get("pp_access_token")?.value;
   const refreshToken = store.get("pp_refresh_token")?.value;
@@ -17,14 +29,7 @@ export async function getCurrentUser() {
     const identity = await createIdentityAuthenticationService().validate(accessToken, refreshToken);
     if (identity) return identity;
   }
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
-  const { data: profile } = await supabaseServer.from("profiles").select("clinic_id,role").eq("id", user.id).maybeSingle();
-  const roleMap: Record<string, string> = { super_admin: "super-admin", owner: "clinic-owner", manager: "practice-manager", receptionist: "receptionist", dentist: "dentist", doctor: "dentist" };
-  const roleCode = profile?.role ? roleMap[profile.role] : undefined;
-  if (!profile?.clinic_id || !roleCode) return null;
-  return { userId: user.id, clinicId: profile.clinic_id, tenantId: profile.clinic_id, roleCodes: [roleCode], permissionCodes: DefaultRolePolicies[roleCode] ?? [], requiresPasswordChange: profile.role === "owner" && await requiresOwnerPasswordChange(user.id) };
+  return null;
 }
 
 export async function isAuthenticated() {

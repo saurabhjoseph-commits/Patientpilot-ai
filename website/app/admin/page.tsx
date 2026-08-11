@@ -18,10 +18,12 @@ import CallCenterDashboard from "@/components/call-center/CallCenterDashboard";
 import { requireAdminPagePermission } from "@/lib/auth-server";
 import { Permissions } from "@/lib/platform/domain/identity";
 import { getClinicOperationalReadiness } from "@/lib/clinic/operational-readiness";
+import { getAdminDashboardPresentation } from "@/lib/clinic/dashboard-presentation";
 import Link from "next/link";
 
 export default async function AdminPage() {
   const identity = await requireAdminPagePermission(Permissions.DashboardRead);
+  const presentation = await getAdminDashboardPresentation(identity);
   const ownerReadiness = identity.roleCodes.includes("clinic-owner") ? await getClinicOperationalReadiness(identity.clinicId) : null;
   const { data: contacts, error } =
     await supabaseServer
@@ -75,6 +77,9 @@ export default async function AdminPage() {
           aiCallsToday={
             analytics.aiCallsToday
           }
+          userName={presentation.userName}
+          clinicName={presentation.clinicName}
+          isPlatformAdmin={presentation.isPlatformAdmin}
         />
 
         <StatsGrid

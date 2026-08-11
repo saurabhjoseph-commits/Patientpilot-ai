@@ -1,6 +1,7 @@
 import "server-only";
 
 import { supabaseServer } from "@/lib/supabase-server";
+import { absoluteUrl } from "@/lib/config/app";
 import type { ClinicOwnerAccount } from "./owner-account";
 
 export type OwnerOnboardingStatus = "pending" | "inviting" | "invited" | "active" | "failed" | "cancelled";
@@ -126,4 +127,4 @@ async function sendInvitation(record: OwnerOnboardingRecord): Promise<OwnerOnboa
 async function requiredRecord(clinicId: string): Promise<OwnerOnboardingRecord> { const record = await getOwnerOnboarding(clinicId); if (!record) throw new OwnerOnboardingError("No owner onboarding record exists for this clinic."); return record; }
 async function fail(record: OwnerOnboardingRecord, failureCode: string, authUserId?: string): Promise<OwnerOnboardingRecord> { return updateRecord(record.id, { status: "failed", auth_user_id: authUserId ?? record.auth_user_id, failure_code: failureCode.slice(0, 100), last_attempt_at: new Date().toISOString(), attempt_count: record.attempt_count + 1 }); }
 async function updateRecord(id: string, updates: Record<string, unknown>): Promise<OwnerOnboardingRecord> { const { data, error } = await supabaseServer.from("clinic_owner_onboarding").update(updates).eq("id", id).select(ONBOARDING_COLUMNS).single(); if (error || !data) throw new OwnerOnboardingError("Unable to update owner onboarding status."); return data as OwnerOnboardingRecord; }
-function activationCallbackUrl(next: "/set-password" | "/reset-password"): string { const origin = process.env.NEXT_PUBLIC_APP_URL; if (!origin || !/^https:\/\//.test(origin)) throw new OwnerOnboardingError("NEXT_PUBLIC_APP_URL must be a valid HTTPS URL before sending owner activation."); return new URL(`/auth/callback?next=${next}`, origin).toString(); }
+function activationCallbackUrl(next: "/set-password" | "/reset-password"): string { try { return absoluteUrl(`/auth/callback?next=${next}`); } catch { throw new OwnerOnboardingError("NEXT_PUBLIC_APP_URL must be a valid HTTPS application origin before sending owner activation."); } }

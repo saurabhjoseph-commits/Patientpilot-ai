@@ -3,7 +3,7 @@ import VoiceResponse from "twilio/lib/twiml/VoiceResponse";
 
 import { startConversation } from "@/lib/ai";
 import { ClinicResolutionError, resolveTelephonyClinic } from "@/lib/clinic/clinic-scope";
-import { TWILIO_WEBHOOKS } from "@/lib/config/app";
+import { getTwilioWebhooks } from "@/lib/config/app";
 import { verifyTwilioWebhook } from "@/lib/telephony/twilio-webhook-security";
 import { createWebhookDeliveryService } from "@/lib/telephony/webhook-delivery-service";
 import { getWebhookDeliveryExpiry } from "@/lib/telephony/twilio-webhook-security";
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
     const gather = twiml.gather({
       input: ["speech"],
 
-      action: TWILIO_WEBHOOKS.aiRespond,
+      action: getTwilioWebhooks().aiRespond,
 
       method: "POST",
 

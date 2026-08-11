@@ -90,12 +90,14 @@ export default function Sidebar({
   canViewDoctors,
   canViewCalendar,
   canManageGlobal,
+  presentation,
   onNavigate,
 }: {
   canViewClinics: boolean;
   canViewDoctors: boolean;
   canViewCalendar: boolean;
   canManageGlobal: boolean;
+  presentation: { isPlatformAdmin: boolean; clinicName: string | null; dashboardLabel: string };
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
@@ -106,11 +108,11 @@ export default function Sidebar({
 
       <div className="border-b border-slate-800 px-6 py-7">
         <h1 className="text-2xl font-bold">
-          PatientPilot AI
+          {presentation.isPlatformAdmin ? "PatientPilot AI" : presentation.clinicName}
         </h1>
 
         <p className="mt-2 text-sm text-slate-400">
-          Admin Dashboard
+          {presentation.dashboardLabel}
         </p>
       </div>
 

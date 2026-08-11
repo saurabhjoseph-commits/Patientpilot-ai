@@ -2,8 +2,15 @@ import { NextResponse, type NextRequest } from "next/server";
 import { bootstrapInfrastructure } from "@/lib/infrastructure/dependency-injection/bootstrap";
 import { createIdentityAuthenticationService } from "@/lib/infrastructure/identity/IdentityUseCaseFactory";
 import { getCompatibilityIdentity } from "@/lib/infrastructure/identity/SupabaseAuthCompatibilityAdapter";
+import { getApplicationOrigin, shouldRedirectToCanonicalHost } from "@/lib/config/app";
 
 export async function proxy(request: NextRequest) {
+  if (shouldRedirectToCanonicalHost(request.nextUrl.hostname)) {
+    const canonical = new URL(request.nextUrl.pathname + request.nextUrl.search, getApplicationOrigin());
+    return NextResponse.redirect(canonical, 308);
+  }
+  const protectedPath = request.nextUrl.pathname.startsWith("/admin") || request.nextUrl.pathname.startsWith("/api/admin/") || ["/api/appointments", "/api/calls", "/api/transcript", "/api/test-console"].includes(request.nextUrl.pathname) || request.nextUrl.pathname.startsWith("/api/leads/");
+  if (!protectedPath) return NextResponse.next();
   const accessToken = request.cookies.get("pp_access_token")?.value;
   const refreshToken = request.cookies.get("pp_refresh_token")?.value;
   const isApi = request.nextUrl.pathname.startsWith("/api/");
@@ -30,4 +37,4 @@ function unauthenticated(request: NextRequest, isApi: boolean): NextResponse {
   return isApi ? NextResponse.json({ error: "Unauthorized" }, { status: 401 }) : NextResponse.redirect(new URL("/login", request.url));
 }
 
-export const config = { matcher: ["/admin/:path*", "/api/admin/:path*", "/api/appointments", "/api/calls", "/api/transcript", "/api/test-console", "/api/leads/:path*"] };
+export const config = { matcher: ["/admin/:path*", "/api/admin/:path*", "/api/appointments", "/api/calls", "/api/transcript", "/api/test-console", "/api/leads/:path*", "/auth/callback", "/set-password", "/reset-password", "/login", "/forgot-password", "/api/auth/:path*"] };

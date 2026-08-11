@@ -532,7 +532,7 @@ Before enabling Twilio callbacks, configure `TWILIO_AUTH_TOKEN` and `TWILIO_WEBH
 
 ## Password recovery configuration
 
-Set `NEXT_PUBLIC_APP_URL` to an origin only: local development may use `http://localhost:3000`; staging and production must use HTTPS. Set Supabase Auth **Site URL** to the corresponding public application origin and add `http://localhost:3000/auth/callback`, `<staging-origin>/auth/callback`, and `https://patientpilot-ai.com/auth/callback` to Supabase Auth **Redirect URLs**.
+Set `NEXT_PUBLIC_APP_URL` to an origin only: local development may use `http://localhost:3000`; staging and production must use HTTPS. Production must set `NEXT_PUBLIC_APP_URL=https://www.patientpilot-ai.com`; do not use the Vercel deployment hostname. Set Supabase Auth **Site URL** to `https://www.patientpilot-ai.com` and add `https://www.patientpilot-ai.com/auth/callback` plus `http://localhost:3000/auth/callback` (and the staging callback) to Supabase Auth **Redirect URLs**.
 
 In Supabase Auth **Email Templates → Reset Password**, use this exact link (do not replace it with `{{ .SiteURL }}` alone or a bare `/auth/v1/verify` URL):
 

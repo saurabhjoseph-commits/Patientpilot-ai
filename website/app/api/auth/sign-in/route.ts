@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { bootstrapInfrastructure } from "@/lib/infrastructure/dependency-injection/bootstrap";
 import { createSignInUseCase } from "@/lib/infrastructure/identity/IdentityUseCaseFactory";
 import { setAuthCookies } from "@/lib/infrastructure/identity/AuthCookies";
+import { clearAuthCookies } from "@/lib/infrastructure/identity/AuthCookies";
 import { createRouteHandlerClient } from "@/lib/supabase/route-handler-client";
 import { supabaseServer } from "@/lib/supabase-server";
 
@@ -28,6 +29,7 @@ export async function POST(request: NextRequest) {
     if (profileError || !profile?.clinic_id || !["super_admin", "owner", "manager", "receptionist", "dentist", "doctor"].includes(profile.role)) {
       return NextResponse.json({ error: "This account is not ready for dashboard access. Contact an administrator." }, { status: 403 });
     }
+    clearAuthCookies(supabaseResponse);
     return supabaseResponse;
   }
 
