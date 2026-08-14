@@ -3,6 +3,7 @@ import { bootstrapInfrastructure } from "@/lib/infrastructure/dependency-injecti
 import { createIdentityAuthenticationService } from "@/lib/infrastructure/identity/IdentityUseCaseFactory";
 import { getCompatibilityIdentity } from "@/lib/infrastructure/identity/SupabaseAuthCompatibilityAdapter";
 import { getApplicationOrigin, shouldRedirectToCanonicalHost } from "@/lib/config/app";
+import type { AuthenticatedIdentity } from "@/lib/infrastructure/identity/IdentityAuthenticationService";
 
 export async function proxy(request: NextRequest) {
   if (shouldRedirectToCanonicalHost(request.nextUrl.hostname)) {
@@ -11,18 +12,17 @@ export async function proxy(request: NextRequest) {
   }
   const protectedPath = request.nextUrl.pathname.startsWith("/admin") || request.nextUrl.pathname.startsWith("/api/admin/") || ["/api/appointments", "/api/calls", "/api/transcript", "/api/test-console"].includes(request.nextUrl.pathname) || request.nextUrl.pathname.startsWith("/api/leads/");
   if (!protectedPath) return NextResponse.next();
+  const isApi = request.nextUrl.pathname.startsWith("/api/");
+  const compatibility = await getCompatibilityIdentity(request);
+  let identity: AuthenticatedIdentity | null = compatibility.identity;
   const accessToken = request.cookies.get("pp_access_token")?.value;
   const refreshToken = request.cookies.get("pp_refresh_token")?.value;
-  const isApi = request.nextUrl.pathname.startsWith("/api/");
-  let identity = null;
-  if (accessToken && refreshToken) {
+  if (!identity && accessToken && refreshToken) {
     bootstrapInfrastructure();
     identity = await createIdentityAuthenticationService().validate(accessToken, refreshToken);
   }
-  const compatibility = identity ? null : await getCompatibilityIdentity(request);
-  identity ??= compatibility?.identity ?? null;
   if (!identity) return unauthenticated(request, isApi);
-  if (compatibility?.identity?.requiresPasswordChange) return isApi ? NextResponse.json({ error: "Password change required" }, { status: 403 }) : NextResponse.redirect(new URL("/set-password", request.url));
+  if (compatibility.identity?.requiresPasswordChange) return isApi ? NextResponse.json({ error: "Password change required" }, { status: 403 }) : NextResponse.redirect(new URL("/set-password", request.url));
   const headers = new Headers(request.headers);
   headers.set("x-identity-user-id", identity.userId);
   headers.set("x-identity-tenant-id", identity.tenantId);
@@ -30,7 +30,7 @@ export async function proxy(request: NextRequest) {
   headers.set("x-identity-role-codes", identity.roleCodes.join(","));
   headers.set("x-identity-permission-codes", identity.permissionCodes.join(","));
   const response = NextResponse.next({ request: { headers } });
-  return compatibility ? compatibility.applyCookies(response) : response;
+  return compatibility.applyCookies(response);
 }
 
 function unauthenticated(request: NextRequest, isApi: boolean): NextResponse {

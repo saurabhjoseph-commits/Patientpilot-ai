@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import LogoutButton from "@/components/auth/LogoutButton";
 
 import {
   LayoutDashboard,
@@ -12,7 +13,6 @@ import {
   Bot,
   TerminalSquare,
   Settings,
-  LogOut,
   Building2,
   Stethoscope,
 } from "lucide-react";
@@ -157,15 +157,7 @@ export default function Sidebar({
       {/* Logout */}
 
       <div className="border-t border-slate-800 p-4">
-        <Link
-          href="/login"
-          onClick={onNavigate}
-          className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-red-400 transition hover:bg-red-600 hover:text-white"
-        >
-          <LogOut className="h-5 w-5" />
-
-          Logout
-        </Link>
+        <LogoutButton onComplete={onNavigate} className="flex min-h-11 w-full items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-red-400 transition hover:bg-red-600 hover:text-white disabled:opacity-60" />
       </div>
     </aside>
   );
