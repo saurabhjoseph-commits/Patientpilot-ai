@@ -19,11 +19,12 @@ export interface ValidationResult {
   errors: string[];
 }
 
-const PHONE_REGEX =
+const US_PHONE_REGEX =
   /^(?:\+?1[-.\s]?)?(?:\(?\d{3}\)?[-.\s]?)\d{3}[-.\s]?\d{4}$/;
+const E164_PHONE_REGEX = /^\+[1-9]\d{7,14}$/;
 
-const TIME_REGEX =
-  /^\d{1,2}(?::\d{2})?\s?(AM|PM)$/i;
+const NATIVE_TIME_REGEX = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
+const MERIDIEM_TIME_REGEX = /^(?:0?[1-9]|1[0-2])(?::[0-5]\d)?\s?(AM|PM)$/i;
 
 /**
  * ============================================================
@@ -62,7 +63,7 @@ export function validatePhoneNumber(
 
   if (!phone) {
     errors.push("Phone number is required.");
-  } else if (!PHONE_REGEX.test(phone.trim())) {
+  } else if (!US_PHONE_REGEX.test(phone.trim()) && !E164_PHONE_REGEX.test(phone.trim())) {
     errors.push("Invalid phone number.");
   }
 
@@ -86,6 +87,8 @@ export function validateAppointmentDate(
 
   if (!date || date.trim().length === 0) {
     errors.push("Appointment date is required.");
+  } else if (!isCalendarDate(date.trim())) {
+    errors.push("Invalid appointment date.");
   }
 
   return {
@@ -108,7 +111,7 @@ export function validateAppointmentTime(
 
   if (!time) {
     errors.push("Appointment time is required.");
-  } else if (!TIME_REGEX.test(time.trim())) {
+  } else if (!NATIVE_TIME_REGEX.test(time.trim()) && !MERIDIEM_TIME_REGEX.test(time.trim())) {
     errors.push("Invalid appointment time.");
   }
 
@@ -117,6 +120,13 @@ export function validateAppointmentTime(
     score: errors.length === 0 ? 100 : 0,
     errors,
   };
+}
+
+function isCalendarDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
 }
 
 /**

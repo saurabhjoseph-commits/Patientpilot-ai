@@ -75,6 +75,9 @@ export function mapPatientInput(
       : "";
 
   return {
+    // Legacy tools have no authenticated scope. Their default context is not a
+    // valid UUID, so the database contract fails closed instead of mis-scoping.
+    clinicId: clinic.id,
     clinicName: clinic.name,
 
     firstName,

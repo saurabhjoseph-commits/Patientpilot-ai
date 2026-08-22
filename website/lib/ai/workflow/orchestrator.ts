@@ -20,6 +20,7 @@ import type {
 } from "@/lib/ai/types";
 
 export interface WorkflowRequest {
+  clinicId: string;
   callId: string;
   message: AIMessage;
   context: AIContext;
@@ -32,13 +33,16 @@ export async function runWorkflow(
 
   const conversation =
     await processConversation({
+      clinicId: request.clinicId,
       callId: request.callId,
       message: request.message,
       intent: request.intent,
+      languageMode: request.context.languageMode,
     });
 
   const execution =
     await executeWorkflow({
+      clinicId: request.clinicId,
       callId: request.callId,
       workflow: conversation.workflow,
       session: conversation.session,

@@ -43,6 +43,11 @@ export class FixtureRepository {
         { id: "room-c", clinicId: fixture.clinicB, name: "Room C", active: true },
       ],
       appointments: [], schedules: [], leaves: [], blocks: [], assignments: [],
+      appointmentRoomAssignments: [
+        { doctorId: "doctor-a", roomId: "room-a", clinicId: fixture.clinicA, effectiveFrom: "2026-01-01", effectiveTo: null, active: true },
+        { doctorId: "doctor-b", roomId: "room-b", clinicId: fixture.clinicA, effectiveFrom: "2026-01-01", effectiveTo: null, active: true },
+        { doctorId: "doctor-c", roomId: "room-c", clinicId: fixture.clinicB, effectiveFrom: "2026-01-01", effectiveTo: null, active: true },
+      ],
     };
   }
 
@@ -84,7 +89,9 @@ export class SchedulingWorkflowService {
     if (!assignment) throw new Error("Selected doctor is not assigned to this service.");
     const room = this.repository.one("rooms", input.roomId, clinicId);
     if (!room.active) throw new Error("Selected room is inactive.");
-    return this.repository.insert("appointments", { clinicId, patientId: "patient-a", patientName: "Fixture Patient", appointmentDate: input.appointmentDate, appointmentTime: input.appointmentTime, doctorId: doctor.id, serviceId: service.id, roomId: room.id, duration: assignment.duration ?? service.duration, status: "Pending", checkedInAt: null, completedAt: null });
+    const roomAssignment = this.repository.tables.appointmentRoomAssignments.find((row) => row.clinicId === clinicId && row.doctorId === doctor.id && row.roomId === room.id && row.active && row.effectiveFrom <= input.appointmentDate && (!row.effectiveTo || row.effectiveTo >= input.appointmentDate));
+    if (!roomAssignment) throw new Error("Selected doctor is not currently assigned to this room.");
+    return this.repository.insert("appointments", { clinicId, patientId: "patient-a", patientName: input.patientName ?? "Fixture Patient", phone: input.phone ?? "+15555550100", email: input.email ?? null, appointmentDate: input.appointmentDate, appointmentTime: input.appointmentTime, doctorId: doctor.id, serviceId: service.id, roomId: room.id, duration: assignment.duration ?? service.duration, source: input.source ?? "Admin", notes: input.notes ?? null, status: "Pending", checkedInAt: null, completedAt: null });
   }
 
   editAppointment(principal, requestedClinicId, id, changes) {
@@ -93,21 +100,26 @@ export class SchedulingWorkflowService {
     const merged = { ...existing, ...changes };
     const resolved = this.appointment(principal, clinicId, merged);
     this.repository.tables.appointments = this.repository.tables.appointments.filter((row) => row.id !== resolved.id);
-    return this.repository.update("appointments", id, clinicId, { appointmentDate: resolved.appointmentDate, appointmentTime: resolved.appointmentTime, doctorId: resolved.doctorId, serviceId: resolved.serviceId, roomId: resolved.roomId, duration: resolved.duration });
+    return this.repository.update("appointments", id, clinicId, { patientName: resolved.patientName, phone: resolved.phone, email: resolved.email, appointmentDate: resolved.appointmentDate, appointmentTime: resolved.appointmentTime, doctorId: resolved.doctorId, serviceId: resolved.serviceId, roomId: resolved.roomId, duration: resolved.duration, source: resolved.source, notes: resolved.notes });
   }
 
   lifecycle(principal, requestedClinicId, id, action, timestamp) {
     const clinicId = this.scope(principal, requestedClinicId, "appointments");
     const appointment = this.repository.one("appointments", id, clinicId);
-    if (action === "confirm") return this.repository.update("appointments", id, clinicId, { status: "Confirmed" });
+    if (action === "confirm") {
+      if (appointment.status === "Confirmed" || appointment.status === "Cancelled" || appointment.completedAt) throw new Error("This appointment cannot be confirmed.");
+      return this.repository.update("appointments", id, clinicId, { status: "Confirmed" });
+    }
     if (action === "check-in") {
       if (appointment.status === "Cancelled" || appointment.checkedInAt) throw new Error("This appointment cannot be checked in.");
       return this.repository.update("appointments", id, clinicId, { status: "Checked In", checkedInAt: timestamp });
     }
     if (action === "complete") {
       if (!appointment.checkedInAt || appointment.status === "Cancelled") throw new Error("An appointment must be checked in before it can be completed.");
+      if (timestamp < appointment.checkedInAt) throw new Error("Completion cannot precede check-in.");
       return this.repository.update("appointments", id, clinicId, { status: "Completed", completedAt: timestamp });
     }
+    if (appointment.status === "Cancelled" || appointment.completedAt) throw new Error("This appointment cannot be cancelled.");
     return this.repository.update("appointments", id, clinicId, { status: "Cancelled" });
   }
 

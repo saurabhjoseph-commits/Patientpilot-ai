@@ -10,11 +10,14 @@ import {
 } from "lucide-react";
 
 import { listPatientsService } from "@/lib/patients/service";
+import { requireAdminPagePermission } from "@/lib/auth-server";
+import { Permissions } from "@/lib/platform/domain/identity";
 
 export const dynamic = "force-dynamic";
 
 export default async function PatientsPage() {
-  const patients = await listPatientsService();
+  const identity = await requireAdminPagePermission(Permissions.PatientsRead);
+  const patients = await listPatientsService({ clinicId: identity.clinicId });
 
   const totalPatients = patients.length;
 

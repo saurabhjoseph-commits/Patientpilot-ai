@@ -68,7 +68,7 @@ export default async function AdminPage() {
   return (
     <main className="min-h-screen bg-slate-100 p-8">
       <div className="mx-auto max-w-7xl space-y-8">
-        {ownerReadiness && !ownerReadiness.h3Ready && <section className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900"><p className="font-semibold">Complete your clinic&apos;s AI Booking Setup</p><p className="mt-1">{ownerReadiness.readyCount} of {ownerReadiness.requiredCount} readiness checks are complete.</p><Link href={`/admin/clinics/${identity.clinicId}`} className="mt-3 inline-flex min-h-11 items-center rounded-lg bg-blue-600 px-4 font-medium text-white">Open clinic setup</Link></section>}
+        {ownerReadiness && (ownerReadiness.h3Ready ? <section className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900"><p className="font-semibold">AI Booking Ready</p><p className="mt-1">All {ownerReadiness.requiredCount} setup requirements are complete.</p><Link href="/admin/demo" className="mt-3 inline-flex min-h-11 items-center rounded-lg bg-emerald-600 px-4 font-medium text-white">Test AI Booking</Link></section> : <section className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900"><p className="font-semibold">Complete your clinic&apos;s AI Booking Setup</p><p className="mt-1">{ownerReadiness.readyCount} of {ownerReadiness.requiredCount} readiness checks are complete.</p><Link href={`/admin/clinics/${identity.clinicId}`} className="mt-3 inline-flex min-h-11 items-center rounded-lg bg-blue-600 px-4 font-medium text-white">Open clinic setup</Link></section>)}
         <DashboardFilters />
 
         <DemoLauncher />

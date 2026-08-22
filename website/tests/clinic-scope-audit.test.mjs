@@ -107,13 +107,15 @@ test("legacy appointment request names map to supported service and phone fields
   const route = read("app/api/appointments/route.ts");
   const workflow = read("lib/appointments/integration.ts");
   assert.match(route, /appointment_type.*input\.service.*input\.reason/);
-  assert.match(workflow, /service:\s*appointment\.reason/);
+  assert.match(workflow, /service: booking\.serviceName/);
+  assert.match(workflow, /serviceId: booking\.serviceId/);
   assert.match(workflow, /phone:\s*appointment\.phoneNumber/);
 });
 
-test("patient persistence matches the authoritative patient columns", () => {
+test("patient persistence carries the review-only clinic ownership contract", () => {
   const repository = read("lib/patients/repository.ts");
   const mapper = read("lib/patients/mapper.ts");
+  const migration = read("lib/supabase/migrations/0024_agent1_patient_clinic_isolation_review.sql");
   for (const column of ["clinic_name", "first_name", "last_name", "full_name", "phone_number", "preferred_contact_method", "total_appointments", "last_appointment_date", "last_call_date"]) {
     assert.match(mapper, new RegExp(column));
   }
@@ -121,7 +123,10 @@ test("patient persistence matches the authoritative patient columns", () => {
   assert.match(repository, /toPatientCreatePersistence/);
   assert.match(repository, /toPatientUpdatePersistence/);
   assert.doesNotMatch(repository, /row: any/);
-  assert.doesNotMatch(mapper, /clinic_id:/);
+  assert.match(mapper, /clinic_id:/);
+  assert.match(repository, /\.eq\("clinic_id", clinicId\)/);
+  assert.match(migration, /add column clinic_id uuid/);
+  assert.match(migration, /alter column clinic_id set not null/);
   assert.doesNotMatch(mapper, /appointment_id:/);
   assert.doesNotMatch(mapper, /call_sid:/);
   assert.match(mapper, /preferred_contact_method/);
@@ -131,7 +136,7 @@ test("patient synchronization follows successful appointment creation", () => {
   const workflow = read("lib/workflows/conversation-workflow.ts");
   assert.match(workflow, /appointmentResult\.created/);
   assert.match(workflow, /await syncPatient\(/);
-  assert.match(workflow, /appointment,\s*DEFAULT_CONTEXT\.clinicName/);
+  assert.match(workflow, /appointment,\s*context\.clinicName/);
 });
 
 test("baseline restores patient, profile, and summary ownership constraints", () => {

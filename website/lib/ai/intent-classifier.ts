@@ -26,6 +26,14 @@ export class KeywordIntentClassifier
   ): IntentClassification {
     const text = message.toLowerCase();
 
+    if (this.matches(text, ["reschedule", "move appointment", "change appointment", "appointment badal", "reschedule karke", "दूसरे दिन"])) {
+      return this.result("reschedule_appointment", 0.99);
+    }
+
+    if (this.matches(text, ["cancel", "cancel appointment", "cancel karna", "appointment cancel", "रद्द"])) {
+      return this.result("cancel_appointment", 0.99);
+    }
+
     if (
       this.matches(text, [
         "hello",
@@ -67,6 +75,10 @@ export class KeywordIntentClassifier
         "book",
         "schedule",
         "make appointment",
+        "need a cleaning appointment",
+        "appointment chahiye",
+        "appointment karwani",
+        "अपॉइंटमेंट",
       ])
     ) {
       return this.result(
@@ -80,6 +92,9 @@ export class KeywordIntentClassifier
         "reschedule",
         "move appointment",
         "change appointment",
+        "appointment badal",
+        "reschedule karke",
+        "दूसरे दिन",
       ])
     ) {
       return this.result(
@@ -92,6 +107,9 @@ export class KeywordIntentClassifier
       this.matches(text, [
         "cancel",
         "cancel appointment",
+        "cancel karna",
+        "appointment cancel",
+        "रद्द",
       ])
     ) {
       return this.result(
@@ -106,6 +124,7 @@ export class KeywordIntentClassifier
         "pricing",
         "cost",
         "fee",
+        "kitna", "charges", "कीमत", "फीस",
       ])
     ) {
       return this.result(
@@ -118,6 +137,7 @@ export class KeywordIntentClassifier
       this.matches(text, [
         "insurance",
         "coverage",
+        "bima", "बीमा",
       ])
     ) {
       return this.result(
@@ -132,6 +152,7 @@ export class KeywordIntentClassifier
         "office hours",
         "open",
         "close",
+        "kab available", "kab khula", "कब खुल", "समय",
       ])
     ) {
       return this.result(
@@ -161,6 +182,7 @@ export class KeywordIntentClassifier
         "bleeding",
         "broken tooth",
         "emergency",
+        "bahut pain", "tez dard", "dard", "sujan", "खून", "दर्द", "सूजन",
       ])
     ) {
       return this.result(
@@ -175,6 +197,7 @@ export class KeywordIntentClassifier
         "person",
         "staff",
         "representative",
+        "agent", "kisi se baat", "स्टाफ", "किसी से बात",
       ])
     ) {
       return this.result(
@@ -209,7 +232,9 @@ export class KeywordIntentClassifier
   ): boolean {
     return keywords.some(
       (keyword) =>
-        text.includes(keyword),
+        keyword === "hi"
+          ? /(?:^|\s)hi(?:\s|[,.!?]|$)/.test(text)
+          : text.includes(keyword),
     );
   }
 

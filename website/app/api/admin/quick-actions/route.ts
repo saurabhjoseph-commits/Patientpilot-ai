@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
           leadId,
           type: "Contact",
           description: "Lead marked as Contacted",
-        });
+        }, resolveAdminClinic(authorization));
 
         break;
       }
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
           leadId,
           type: "Demo",
           description: `Demo scheduled for ${demoDate}`,
-        });
+        }, resolveAdminClinic(authorization));
 
         break;
       }
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
           type: "Patient",
           description:
             "Lead converted to Patient",
-        });
+        }, resolveAdminClinic(authorization));
 
         break;
       }

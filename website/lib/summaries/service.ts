@@ -27,6 +27,8 @@ import type {
   SummaryFilters,
   UpdateSummaryInput,
 } from "./types";
+import type { ClinicScope } from "@/lib/clinic/clinic-scope";
+import { resolveCallOwnership } from "@/lib/calls/ownership";
 
 /**
  * ============================================================
@@ -44,6 +46,8 @@ import type {
 export async function createSummaryService(
   session: AIConversationSession,
   result: AICompletionResult,
+  scope: ClinicScope,
+  clinicName: string,
   appointment?: Appointment,
   patient?: Patient,
 ): Promise<CallSummary> {
@@ -63,20 +67,18 @@ export async function createSummaryService(
     );
   }
 
-  const existing =
-    await getSummaryByCallSid(callId);
+  if (!clinicName) {
+    throw new Error("A trusted clinic scope is required to create a summary.");
+  }
+
+  const existing = await getSummaryByCallSid(callId, scope.clinicId);
 
   if (existing) {
     return existing;
   }
 
-  const summary =
-    generateSummary(
-      session,
-      result,
-      appointment,
-      patient,
-    );
+  const call = await resolveCallOwnership(scope, callId);
+  const summary = generateSummary(session, result, scope, call, clinicName, appointment, patient);
 
   return createSummary(summary);
 }
@@ -86,8 +88,9 @@ export async function createSummaryService(
  */
 export async function getSummaryService(
   id: string,
+  scope: ClinicScope,
 ): Promise<CallSummary | null> {
-  return getSummary(id);
+  return getSummary(id, scope.clinicId);
 }
 
 /**
@@ -95,15 +98,16 @@ export async function getSummaryService(
  */
 export async function getSummaryByCallSidService(
   callSid: string,
+  scope: ClinicScope,
 ): Promise<CallSummary | null> {
-  return getSummaryByCallSid(callSid);
+  return getSummaryByCallSid(callSid, scope.clinicId);
 }
 
 /**
  * List summaries.
  */
 export async function listSummariesService(
-  filters?: SummaryFilters,
+  filters: SummaryFilters,
 ): Promise<CallSummary[]> {
   return listSummaries(filters);
 }
@@ -114,8 +118,9 @@ export async function listSummariesService(
 export async function updateSummaryService(
   id: string,
   input: UpdateSummaryInput,
+  scope: ClinicScope,
 ): Promise<CallSummary> {
-  return updateSummary(id, input);
+  return updateSummary(id, input, scope.clinicId);
 }
 
 /**
@@ -123,6 +128,7 @@ export async function updateSummaryService(
  */
 export async function deleteSummaryService(
   id: string,
+  scope: ClinicScope,
 ): Promise<void> {
-  return deleteSummary(id);
+  return deleteSummary(id, scope.clinicId);
 }

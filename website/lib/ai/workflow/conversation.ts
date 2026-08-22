@@ -5,7 +5,11 @@ import {
   createSession,
   getSession,
   updateAppointment,
+  configureSessionLanguage,
+  updateSessionLanguage,
+  updateIntent,
 } from "@/lib/ai/session";
+import { detectConversationLanguage, type ClinicLanguageMode } from "@/lib/platform/domain/clinic-language";
 
 import {
   extractAppointmentData,
@@ -50,9 +54,11 @@ import type { DecisionResult } from "@/lib/ai/decision/types";
  */
 
 export interface ConversationRequest {
+  clinicId: string;
   callId: string;
   message: AIMessage;
   intent: AIIntent;
+  languageMode: ClinicLanguageMode;
 }
 
 export interface ConversationResult {
@@ -73,13 +79,16 @@ export async function processConversation(
   /**
    * Ensure a session exists.
    */
-  createSession(callId);
+  await createSession(request.clinicId, callId, request.languageMode);
+  await configureSessionLanguage(request.clinicId, callId, request.languageMode);
+  await updateSessionLanguage(request.clinicId, callId, detectConversationLanguage(message.content));
+  await updateIntent(request.clinicId, callId, intent);
 
   /**
    * Store the incoming message.
    */
-  addMessage(
-    callId,
+  await addMessage(
+    request.clinicId, callId,
     message,
   );
 
@@ -99,8 +108,8 @@ export async function processConversation(
       extraction.appointment,
     )
   ) {
-    updateAppointment(
-      callId,
+    await updateAppointment(
+      request.clinicId, callId,
       extraction.appointment,
     );
   }
@@ -109,7 +118,8 @@ export async function processConversation(
    * Load the updated session.
    */
   const session =
-    getSession(callId);
+    await getSession(request.clinicId, callId);
+  if (!session) throw new Error("Conversation session is unavailable.");
 
   /**
    * Determine the next action.

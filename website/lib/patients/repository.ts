@@ -48,12 +48,14 @@ export async function createPatient(
  * Get patient by ID.
  */
 export async function getPatient(
-  id: string
+  id: string,
+  clinicId: string,
 ): Promise<Patient | null> {
   const { data, error } = await supabaseServer
     .from(TABLE)
     .select("*")
     .eq("id", id)
+    .eq("clinic_id", clinicId)
     .maybeSingle();
 
   if (error) {
@@ -67,11 +69,13 @@ export async function getPatient(
  * Find patient by phone number.
  */
 export async function findPatientByPhone(
-  phoneNumber: string
+  clinicId: string,
+  phoneNumber: string,
 ): Promise<Patient | null> {
   const { data, error } = await supabaseServer
     .from(TABLE)
     .select("*")
+    .eq("clinic_id", clinicId)
     .eq("phone_number", phoneNumber)
     .maybeSingle();
 
@@ -86,7 +90,7 @@ export async function findPatientByPhone(
  * List patients.
  */
 export async function listPatients(
-  filters?: PatientFilters
+  filters: PatientFilters
 ): Promise<Patient[]> {
   let query = supabaseServer
     .from(TABLE)
@@ -94,6 +98,8 @@ export async function listPatients(
     .order("created_at", {
       ascending: false,
     });
+
+  query = query.eq("clinic_id", filters.clinicId);
 
   if (filters?.status) {
     query = query.eq(
@@ -144,6 +150,7 @@ export async function listPatients(
  */
 export async function updatePatient(
   id: string,
+  clinicId: string,
   input: UpdatePatientInput
 ): Promise<Patient> {
   const { data, error } =
@@ -151,6 +158,7 @@ export async function updatePatient(
       .from(TABLE)
       .update(toPatientUpdatePersistence(input))
       .eq("id", id)
+      .eq("clinic_id", clinicId)
       .select()
       .single();
 
@@ -165,12 +173,14 @@ export async function updatePatient(
  * Delete patient.
  */
 export async function deletePatient(
-  id: string
+  id: string,
+  clinicId: string,
 ): Promise<void> {
   const { error } = await supabaseServer
     .from(TABLE)
     .delete()
-    .eq("id", id);
+    .eq("id", id)
+    .eq("clinic_id", clinicId);
 
   if (error) {
     throw error;

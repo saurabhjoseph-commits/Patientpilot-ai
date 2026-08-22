@@ -11,6 +11,7 @@ import {
   fromAppointmentPersistence,
   toAppointmentPersistence,
 } from "./mapper";
+import { mapAppointmentPersistenceError } from "./errors";
 
 /**
  * ============================================================
@@ -39,7 +40,7 @@ export async function createAppointment(
     .single();
 
   if (error) {
-    throw error;
+    throw mapAppointmentPersistenceError(error);
   }
 
   return fromAppointmentPersistence(data);
@@ -60,7 +61,7 @@ export async function getAppointment(
     .maybeSingle();
 
   if (error) {
-    throw error;
+    throw mapAppointmentPersistenceError(error);
   }
 
   return data ? fromAppointmentPersistence(data) : null;
@@ -111,7 +112,7 @@ export async function listAppointments(
   const { data, error } = await query;
 
   if (error) {
-    throw error;
+    throw mapAppointmentPersistenceError(error);
   }
 
   return (data ?? []).map(fromAppointmentPersistence);
@@ -171,7 +172,7 @@ export async function updateAppointment(
     .single();
 
   if (error) {
-    throw error;
+    throw mapAppointmentPersistenceError(error);
   }
 
   return fromAppointmentPersistence(data);

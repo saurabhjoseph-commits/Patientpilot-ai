@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
       leadId,
       type: "Notes",
       description: "Internal notes updated",
-    });
+    }, resolveAdminClinic(authorization));
 
     return NextResponse.json({
       success: true,

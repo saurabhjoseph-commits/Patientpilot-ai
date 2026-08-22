@@ -70,6 +70,8 @@ export async function POST(
       context ?? {
         clinicName: "Bright Smile Dental",
 
+        languageMode: "english",
+
         timezone: "America/New_York",
 
         officeHours:

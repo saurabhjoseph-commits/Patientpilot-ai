@@ -15,6 +15,8 @@ import type {
   CreateSummaryInput,
   SummaryOutcome,
 } from "./types";
+import type { ClinicScope } from "@/lib/clinic/clinic-scope";
+import type { CallOwnership } from "@/lib/calls/ownership";
 
 /**
  * ============================================================
@@ -26,6 +28,9 @@ import type {
 export function generateSummary(
   session: AIConversationSession,
   result: AICompletionResult,
+  scope: ClinicScope,
+  call: CallOwnership,
+  clinicName: string,
   appointment?: Appointment,
   patient?: Patient,
 ): CreateSummaryInput {
@@ -35,6 +40,10 @@ export function generateSummary(
    */
   const callId =
     session.callSid ?? session.callId;
+
+  if (!clinicName || call.clinicId !== scope.clinicId) {
+    throw new Error("A trusted clinic-scoped call is required to create a summary.");
+  }
 
   const appointmentData =
     result.response.appointment;
@@ -50,11 +59,11 @@ export function generateSummary(
     appointmentData?.preferredTime;
 
   return {
+    clinicId: scope.clinicId,
+    callId: call.callId,
     callSid: callId,
 
-    clinicName:
-      patient?.clinicName ??
-      "PatientPilot Demo Clinic",
+    clinicName,
 
     patientName:
       appointment?.patientName ??

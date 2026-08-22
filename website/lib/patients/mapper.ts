@@ -7,6 +7,7 @@ import type {
 
 export interface PatientRow {
   id: string;
+  clinic_id: string;
   clinic_name: string;
   first_name: string;
   last_name: string;
@@ -26,6 +27,7 @@ export interface PatientRow {
 }
 
 export interface PatientCreatePersistence {
+  clinic_id: string;
   clinic_name: string;
   first_name: string;
   last_name: string;
@@ -60,6 +62,7 @@ export function toPatientCreatePersistence(
   input: CreatePatientInput,
 ): PatientCreatePersistence {
   return {
+    clinic_id: input.clinicId,
     clinic_name: input.clinicName,
     first_name: input.firstName,
     last_name: input.lastName,
@@ -114,6 +117,7 @@ export function toPatientUpdatePersistence(
 export function fromPatientPersistence(row: PatientRow): Patient {
   return {
     id: row.id,
+    clinicId: row.clinic_id,
     clinicName: row.clinic_name,
     firstName: row.first_name,
     lastName: row.last_name,

@@ -1,303 +1,33 @@
-// website/lib/ai/session.ts
+import type { AIConversationSession, AIConversationState, AIIntent, AIMessage, AppointmentData, PatientData, ConversationAnalysis } from "./core";
+import { createConversationLanguageState, updateConversationLanguageState, type ClinicLanguageMode, type LanguageDetection } from "@/lib/platform/domain/clinic-language";
+import { conversationSessionStore } from "./session-store";
 
-import type {
-  AIConversationSession,
-  AIConversationState,
-  AIIntent,
-  AIMessage,
-  AppointmentData,
-  PatientData,
-  ConversationAnalysis,
-} from "./core";
-
-const sessions = new Map<string, AIConversationSession>();
-
-function now(): string {
-  return new Date().toISOString();
-}
-
-/**
- * Creates a new conversation session.
- */
-export function createSession(
-  callId: string,
-): AIConversationSession {
-  const existing = sessions.get(callId);
-
-  if (existing) {
-    return existing;
-  }
-
-  const session: AIConversationSession = {
-    id: crypto.randomUUID(),
-
-    callId,
-
-    /**
-     * RC4 Compatibility
-     */
-    callSid: callId,
-
-    /**
-     * Conversation State
-     */
-    state: "greeting",
-
-    intent: "unknown",
-
-    /**
-     * Conversation Data
-     */
-    patient: {},
-
-    appointment: {
-      confirmed: false,
-    },
-
-    messages: [],
-
-    analysis: undefined,
-
-    /**
-     * Sprint C1
-     */
-    missingFields: [],
-
-    currentStep: "greeting",
-
-    confidence: 1,
-
-    completed: false,
-
-    needsHuman: false,
-
-    createdAt: now(),
-
-    updatedAt: now(),
-  };
-
-  sessions.set(callId, session);
-
+const now = () => new Date().toISOString();
+export async function createSession(clinicId: string, callId: string, mode: ClinicLanguageMode = "english"): Promise<AIConversationSession> {
+  const existing = await conversationSessionStore().load(clinicId, callId);
+  if (existing) return existing;
+  const timestamp = now();
+  const session: AIConversationSession = { id: crypto.randomUUID(), clinicId, callId, callSid: callId, state: "greeting", intent: "unknown", patient: {}, appointment: { confirmed: false }, messages: [], analysis: undefined, missingFields: [], currentStep: "greeting", confidence: 1, completed: false, needsHuman: false, language: createConversationLanguageState(mode), recognitionFailureCount: 0, createdAt: timestamp, updatedAt: timestamp };
+  await conversationSessionStore().save(session);
   return session;
 }
-
-/**
- * Returns an existing session
- * or creates a new one.
- */
-export function getSession(
-  callId: string,
-): AIConversationSession {
-  return (
-    sessions.get(callId) ??
-    createSession(callId)
-  );
-}
-
-/**
- * Persists session changes.
- */
-export function saveSession(
-  session: AIConversationSession,
-): void {
-  session.updatedAt = now();
-
-  sessions.set(
-    session.callId,
-    session,
-  );
-}
-
-/**
- * Removes a session.
- */
-export function deleteSession(
-  callId: string,
-): boolean {
-  return sessions.delete(callId);
-}
-
-/**
- * Adds a conversation message.
- */
-export function addMessage(
-  callId: string,
-  message: AIMessage,
-): void {
-  const session =
-    getSession(callId);
-
-  session.messages.push(message);
-
-  saveSession(session);
-}
-
-/**
- * Updates patient information.
- */
-export function updatePatient(
-  callId: string,
-  patient: Partial<PatientData>,
-): void {
-  const session =
-    getSession(callId);
-
-  session.patient = {
-    ...session.patient,
-    ...patient,
-  };
-
-  saveSession(session);
-}
-
-/**
- * Updates appointment information.
- */
-export function updateAppointment(
-  callId: string,
-  appointment: Partial<AppointmentData>,
-): void {
-  const session =
-    getSession(callId);
-
-  session.appointment = {
-    ...session.appointment,
-    ...appointment,
-  };
-
-  saveSession(session);
-}
-
-/**
- * Updates workflow state.
- */
-export function updateState(
-  callId: string,
-  state: AIConversationState,
-): void {
-  const session =
-    getSession(callId);
-
-  session.state = state;
-
-  saveSession(session);
-}
-
-/**
- * Updates detected intent.
- */
-export function updateIntent(
-  callId: string,
-  intent: AIIntent,
-): void {
-  const session =
-    getSession(callId);
-
-  session.intent = intent;
-
-  saveSession(session);
-}
-
-/**
- * Stores the latest AI analysis.
- */
-export function updateAnalysis(
-  callId: string,
-  analysis: ConversationAnalysis,
-): void {
-  const session =
-    getSession(callId);
-
-  session.analysis = analysis;
-
-  saveSession(session);
-}
-
-/**
- * Updates missing fields.
- */
-export function setMissingFields(
-  callId: string,
-  fields: string[],
-): void {
-  const session =
-    getSession(callId);
-
-  session.missingFields = fields;
-
-  saveSession(session);
-}
-
-/**
- * Updates the current conversation step.
- */
-export function setCurrentStep(
-  callId: string,
-  step: string,
-): void {
-  const session =
-    getSession(callId);
-
-  session.currentStep = step;
-
-  saveSession(session);
-}
-
-/**
- * Updates AI confidence.
- */
-export function setConfidence(
-  callId: string,
-  confidence: number,
-): void {
-  const session =
-    getSession(callId);
-
-  session.confidence = confidence;
-
-  saveSession(session);
-}
-
-/**
- * Marks conversation as completed.
- */
-export function markCompleted(
-  callId: string,
-): void {
-  const session =
-    getSession(callId);
-
-  session.completed = true;
-
-  session.endedAt = now();
-
-  saveSession(session);
-}
-
-/**
- * Requests human handoff.
- */
-export function requestHumanTransfer(
-  callId: string,
-): void {
-  const session =
-    getSession(callId);
-
-  session.needsHuman = true;
-
-  saveSession(session);
-}
-
-/**
- * Returns every active session.
- */
-export function getAllSessions(): AIConversationSession[] {
-  return [...sessions.values()];
-}
-
-/**
- * Clears all active sessions.
- */
-export function clearSessions(): void {
-  sessions.clear();
-}
+export const getSession = (clinicId: string, callId: string) => conversationSessionStore().load(clinicId, callId);
+export async function requireSession(clinicId: string, callId: string): Promise<AIConversationSession> { const session = await getSession(clinicId, callId); if (!session) throw new Error("Conversation session is missing, completed, or expired."); return session; }
+export async function saveSession(session: AIConversationSession): Promise<void> { session.updatedAt = now(); await conversationSessionStore().save(session); }
+export const deleteSession = (clinicId: string, callId: string) => conversationSessionStore().remove(clinicId, callId);
+async function mutate(clinicId: string, callId: string, fn: (s: AIConversationSession) => void): Promise<AIConversationSession> { const session = await requireSession(clinicId, callId); fn(session); await saveSession(session); return session; }
+export const addMessage = (c: string, id: string, v: AIMessage) => mutate(c, id, s => { s.messages.push(v); });
+export const updatePatient = (c: string, id: string, v: Partial<PatientData>) => mutate(c, id, s => { s.patient = { ...s.patient, ...v }; });
+export const updateAppointment = (c: string, id: string, v: Partial<AppointmentData>) => mutate(c, id, s => { s.appointment = { ...s.appointment, ...v }; });
+export const updateState = (c: string, id: string, v: AIConversationState) => mutate(c, id, s => { s.state = v; });
+export const updateIntent = (c: string, id: string, v: AIIntent) => mutate(c, id, s => { s.intent = v; });
+export const updateAnalysis = (c: string, id: string, v: ConversationAnalysis) => mutate(c, id, s => { s.analysis = v; });
+export const setMissingFields = (c: string, id: string, v: string[]) => mutate(c, id, s => { s.missingFields = v; });
+export const setCurrentStep = (c: string, id: string, v: string) => mutate(c, id, s => { s.currentStep = v; });
+export const setConfidence = (c: string, id: string, v: number) => mutate(c, id, s => { s.confidence = v; });
+export const markCompleted = (c: string, id: string) => mutate(c, id, s => { s.completed = true; s.endedAt = now(); });
+export const requestHumanTransfer = (c: string, id: string) => mutate(c, id, s => { s.needsHuman = true; });
+export const configureSessionLanguage = (c: string, id: string, mode: ClinicLanguageMode) => mutate(c, id, s => { if (s.language.configuredMode !== mode) s.language = createConversationLanguageState(mode); });
+export const updateSessionLanguage = (c: string, id: string, detection: LanguageDetection) => mutate(c, id, s => { s.language = updateConversationLanguageState(s.language, detection); });
+export const recordRecognitionFailure = (c: string, id: string) => mutate(c, id, s => { s.recognitionFailureCount += 1; });
+export const resetRecognitionFailures = (c: string, id: string) => mutate(c, id, s => { s.recognitionFailureCount = 0; });

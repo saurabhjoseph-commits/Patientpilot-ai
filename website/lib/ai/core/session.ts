@@ -8,6 +8,7 @@ import type {
   ConversationAnalysis,
 } from "./analysis";
 import type { PatientData } from "./patient";
+import type { ConversationLanguageState } from "@/lib/platform/domain/clinic-language";
 
 /**
  * ============================================================
@@ -17,6 +18,8 @@ import type { PatientData } from "./patient";
  */
 
 export interface AIConversationSession {
+  /** Server-derived tenant owner. */
+  clinicId: string;
   /**
    * Internal session id.
    */
@@ -95,6 +98,11 @@ export interface AIConversationSession {
    * AI determined that a human should take over.
    */
   needsHuman: boolean;
+
+  language: ConversationLanguageState;
+
+  /** Consecutive empty or unusable speech-recognition callbacks. */
+  recognitionFailureCount: number;
 
   createdAt: string;
 

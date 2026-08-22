@@ -219,6 +219,7 @@ export function validatePatient(
   patient: Patient
 ): ValidationResult {
   return validateCreatePatient({
+    clinicId: patient.clinicId,
     clinicName: patient.clinicName,
     firstName: patient.firstName,
     lastName: patient.lastName,

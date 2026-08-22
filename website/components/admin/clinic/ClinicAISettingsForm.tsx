@@ -75,10 +75,9 @@ export default function ClinicAISettingsForm({
               onChange={(e) => update("language", e.target.value)}
               className={inputClass}
             >
-              <option value="en-US">English (US)</option>
-              <option value="en-GB">English (UK)</option>
-              <option value="en-AU">English (Australia)</option>
-              <option value="hi-IN">Hindi</option>
+              <option value="bilingual-auto">Bilingual Auto (English / Hindi / Hinglish)</option>
+              <option value="english">English</option>
+              <option value="hindi">Hindi</option>
             </select>
           </Field>
 
@@ -89,6 +88,7 @@ export default function ClinicAISettingsForm({
               onChange={(e) => update("voice", e.target.value)}
               className={inputClass}
             >
+              <option value="alloy">Alloy</option>
               <option value="female-1">Professional Female</option>
               <option value="female-2">Friendly Female</option>
               <option value="male-1">Professional Male</option>

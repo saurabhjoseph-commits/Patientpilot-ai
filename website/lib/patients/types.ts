@@ -16,6 +16,8 @@ export type PatientStatus =
 export interface Patient {
   id: string;
 
+  clinicId: string;
+
   clinicName: string;
 
   firstName: string;
@@ -57,6 +59,8 @@ export interface Patient {
  * a patient.
  */
 export interface CreatePatientInput {
+  clinicId: string;
+
   clinicName: string;
 
   firstName: string;
@@ -115,6 +119,8 @@ export interface UpdatePatientInput {
  * Search filters.
  */
 export interface PatientFilters {
+  clinicId: string;
+
   clinicName?: string;
 
   status?: PatientStatus;

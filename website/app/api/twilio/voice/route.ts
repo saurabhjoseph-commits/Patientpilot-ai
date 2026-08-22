@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import VoiceResponse from "twilio/lib/twiml/VoiceResponse";
 
-import { startConversation } from "@/lib/ai";
+import { startConversation, updatePatient } from "@/lib/ai";
 import { ClinicResolutionError, resolveTelephonyClinic } from "@/lib/clinic/clinic-scope";
 import { getTwilioWebhooks } from "@/lib/config/app";
 import { verifyTwilioWebhook } from "@/lib/telephony/twilio-webhook-security";
 import { createWebhookDeliveryService } from "@/lib/telephony/webhook-delivery-service";
 import { getWebhookDeliveryExpiry } from "@/lib/telephony/twilio-webhook-security";
+import { ensureTelephonyCall } from "@/lib/calls/ownership";
+import { getClinicReceptionistContext } from "@/lib/ai/clinic-receptionist-context";
+import { selectVoiceProfile } from "@/lib/telephony/voice-policy";
 
 import {
   addEvent,
@@ -57,14 +60,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    resolveTelephonyClinic(to);
+    const scope = resolveTelephonyClinic(to);
+    await ensureTelephonyCall(scope, { callSid, phone: from });
+    const receptionistContext = await getClinicReceptionistContext(scope.clinicId);
 
     /**
      * ----------------------------------------
      * AI Conversation
      * ----------------------------------------
      */
-    startConversation(callSid);
+    const session = await startConversation(scope.clinicId, callSid, receptionistContext.languageMode);
+    await updatePatient(scope.clinicId, callSid, { phone: from });
 
     /**
      * ----------------------------------------
@@ -92,15 +98,18 @@ export async function POST(request: NextRequest) {
     });
 
     const twiml = new VoiceResponse();
+    const voiceProfile = selectVoiceProfile(session.language.currentPatientLanguage, session.language.configuredMode, receptionistContext.country);
 
     const gather = twiml.gather({
       input: ["speech"],
+
+      actionOnEmptyResult: true,
 
       action: getTwilioWebhooks().aiRespond,
 
       method: "POST",
 
-      language: "en-US",
+      language: voiceProfile.language,
 
       speechTimeout: "auto",
 
@@ -109,9 +118,14 @@ export async function POST(request: NextRequest) {
 
     gather.say(
       {
-        voice: "alice",
+        voice: voiceProfile.voice,
+        language: voiceProfile.language,
       },
-      "Hello. Thank you for calling Patient Pilot AI. How may I help you today?"
+      receptionistContext.languageMode === "bilingual-auto"
+        ? `Hello, thank you for calling ${receptionistContext.clinicName}. Namaste. How can I help you today?`
+        : receptionistContext.languageMode === "hindi"
+          ? `Namaste. ${receptionistContext.clinicName} mein aapka swagat hai. Main aapki kya madad kar sakti hoon?`
+          : `Hello. Thank you for calling ${receptionistContext.clinicName}. How may I help you today?`
     );
 
     /**
@@ -119,7 +133,8 @@ export async function POST(request: NextRequest) {
      */
     twiml.say(
       {
-        voice: "alice",
+        voice: voiceProfile.voice,
+        language: voiceProfile.language,
       },
       "I didn't hear a response. Please call again if you need assistance. Goodbye."
     );

@@ -12,6 +12,8 @@ import { ClinicResolutionError, resolveTelephonyClinic } from "@/lib/clinic/clin
 import { verifyTwilioWebhook } from "@/lib/telephony/twilio-webhook-security";
 import { getWebhookDeliveryExpiry } from "@/lib/telephony/twilio-webhook-security";
 import { createWebhookDeliveryService } from "@/lib/telephony/webhook-delivery-service";
+import { persistTelephonyCallStatus, resolveCallOwnership } from "@/lib/calls/ownership";
+import { markCompleted } from "@/lib/ai/session";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -73,7 +75,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    resolveTelephonyClinic(to);
+    const scope = resolveTelephonyClinic(to);
 
     /**
      * Ignore callbacks for unknown calls.
@@ -84,6 +86,13 @@ export async function POST(request: NextRequest) {
         success: true,
         message: "Live call not found. Ignoring callback.",
       });
+    }
+
+    await resolveCallOwnership(scope, callSid);
+    await persistTelephonyCallStatus(scope, callSid, callStatus, duration);
+
+    if (["completed", "busy", "failed", "no-answer", "canceled"].includes(callStatus)) {
+      try { await markCompleted(scope.clinicId, callSid); } catch { /* A terminal callback may arrive after expiry. */ }
     }
 
     switch (callStatus) {

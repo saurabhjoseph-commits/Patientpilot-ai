@@ -24,7 +24,6 @@ import {
 import type {
   AICompletionResult,
   AIConversationSession,
-  AIContext,
   AIMessage,
 } from "@/lib/ai/types";
 
@@ -40,6 +39,8 @@ import type {
   CallSummary,
 } from "@/lib/summaries/types";
 import type { ClinicScope } from "@/lib/clinic/clinic-scope";
+import { getClinicReceptionistContext } from "@/lib/ai/clinic-receptionist-context";
+import type { AIContext } from "@/lib/ai/types";
 
 /**
  * ============================================================
@@ -58,20 +59,11 @@ export interface ConversationWorkflowResult {
   patient?: Patient;
 
   summary?: CallSummary;
-}
 
-const DEFAULT_CONTEXT: AIContext = {
-  clinicName: "Bright Smile Dental",
-  timezone: "America/New_York",
-  officeHours: "Mon-Fri 8:00 AM - 5:00 PM",
-  providers: ["Dr. Smith"],
-  acceptedInsurance: ["Delta Dental"],
-  appointmentTypes: [
-    "Cleaning",
-    "Emergency",
-    "Consultation",
-  ],
-};
+  bookingFailure?: string;
+
+  bookingDoctorName?: string;
+}
 
 /**
  * Execute a complete conversation workflow.
@@ -80,7 +72,9 @@ export async function executeConversationWorkflow(
   callSid: string,
   userMessage: string,
   scope: ClinicScope,
+  suppliedContext?: AIContext,
 ): Promise<ConversationWorkflowResult> {
+  const context = suppliedContext ?? await getClinicReceptionistContext(scope.clinicId);
   const message: AIMessage = {
     id: crypto.randomUUID(),
     role: "user",
@@ -98,7 +92,7 @@ export async function executeConversationWorkflow(
   const aiResponse =
     await continueConversation({
       callId: callSid,
-      context: DEFAULT_CONTEXT,
+      context,
       message,
       intent: classification.intent,
     });
@@ -113,7 +107,8 @@ export async function executeConversationWorkflow(
    * Reload latest session.
    */
   const session =
-    getConversation(callSid);
+    await getConversation(scope.clinicId, callSid);
+  if (!session) throw new Error("Conversation session is unavailable.");
 
   let appointment:
     | Appointment
@@ -127,6 +122,9 @@ export async function executeConversationWorkflow(
     | CallSummary
     | undefined;
 
+  let bookingFailure: string | undefined;
+  let bookingDoctorName: string | undefined;
+
   /**
    * Synchronize appointment.
    */
@@ -135,6 +133,7 @@ export async function executeConversationWorkflow(
       session,
       ai,
       scope,
+      context.timezone,
     );
 
   if (
@@ -143,6 +142,7 @@ export async function executeConversationWorkflow(
   ) {
     appointment =
       appointmentResult.appointment;
+    bookingDoctorName = appointmentResult.doctorName;
 
     /**
      * Synchronize patient.
@@ -150,7 +150,7 @@ export async function executeConversationWorkflow(
     const patientResult =
       await syncPatient(
         appointment,
-        DEFAULT_CONTEXT.clinicName,
+        context.clinicName,
       );
 
     patient =
@@ -163,9 +163,13 @@ export async function executeConversationWorkflow(
       await createSummaryService(
         session,
         ai,
+        scope,
+        context.clinicName,
         appointment,
         patient,
       );
+  } else if (ai.analysis.completed && ai.response.appointment?.confirmed === true) {
+    bookingFailure = appointmentResult.reason ?? "The appointment could not be created.";
   }
 
   return {
@@ -174,5 +178,7 @@ export async function executeConversationWorkflow(
     appointment,
     patient,
     summary,
+    bookingFailure,
+    bookingDoctorName,
   };
 }

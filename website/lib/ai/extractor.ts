@@ -44,7 +44,8 @@ export function extractAppointmentData(
    */
 
   const datePatterns = [
-    /\b(today|tomorrow)\b/i,
+    /\b(today|tomorrow|aaj|kal)\b/i,
+    /(आज|कल)/,
     /\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i,
     /\b\d{1,2}\/\d{1,2}(?:\/\d{2,4})?\b/,
     /\b(january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2}\b/i,
@@ -55,6 +56,7 @@ export function extractAppointmentData(
 
     if (match) {
       appointment.appointmentDate = match[0];
+      appointment.preferredDate = match[0];
       confidence += 20;
       break;
     }
@@ -67,11 +69,12 @@ export function extractAppointmentData(
    */
 
   const timeMatch = text.match(
-    /\b\d{1,2}(?::\d{2})?\s?(am|pm)\b/i
+    /\b\d{1,2}(?::\d{2})?\s?(?:am|pm|baje)\b/i
   );
 
   if (timeMatch) {
     appointment.appointmentTime = timeMatch[0];
+    appointment.preferredTime = timeMatch[0];
     confidence += 20;
   }
 
@@ -96,6 +99,10 @@ export function extractAppointmentData(
     "emergency",
     "consultation",
     "filling",
+    "daant ka dard",
+    "दांत में दर्द",
+    "सफाई",
+    "जड़ उपचार",
   ];
 
   const lower = text.toLowerCase();

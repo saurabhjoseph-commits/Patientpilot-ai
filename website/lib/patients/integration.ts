@@ -39,6 +39,7 @@ export async function syncPatient(
 
   const patient =
     await findOrCreatePatient({
+      clinicId: appointment.clinicId,
       clinicName,
 
       firstName:

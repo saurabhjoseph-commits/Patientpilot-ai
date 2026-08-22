@@ -5,6 +5,7 @@ import { listAppointmentsService } from "@/lib/appointments/service";
 import { resolveAdminClinic } from "@/lib/clinic/clinic-scope";
 import { requirePermission } from "@/lib/infrastructure/identity/AuthorizationContext";
 import { Permissions } from "@/lib/platform/domain/identity";
+import { isAppointmentSlotConflict } from "@/lib/appointments/errors";
 
 /**
  * ============================================================
@@ -29,6 +30,9 @@ export async function GET(request: NextRequest) {
       appointments,
     });
   } catch (error) {
+    if (isAppointmentSlotConflict(error)) {
+      return NextResponse.json({ success: false, code: error.code, message: error.message }, { status: 409 });
+    }
     console.error(error);
 
     return NextResponse.json(
@@ -36,9 +40,7 @@ export async function GET(request: NextRequest) {
         success: false,
         message: "Unable to load appointments.",
       },
-      {
-        status: 500,
-      }
+      { status: 500 }
     );
   }
 }

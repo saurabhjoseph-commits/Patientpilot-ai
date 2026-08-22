@@ -1,4 +1,5 @@
 import { supabaseServer } from "@/lib/supabase-server";
+import type { ClinicScope } from "@/lib/clinic/clinic-scope";
 
 interface ActivityInput {
   leadId: number;
@@ -10,7 +11,17 @@ export async function logLeadActivity({
   leadId,
   type,
   description,
-}: ActivityInput) {
+}: ActivityInput, scope: ClinicScope) {
+  const { data: lead, error: leadError } = await supabaseServer
+    .from("contacts")
+    .select("id")
+    .eq("id", leadId)
+    .eq("clinic_id", scope.clinicId)
+    .maybeSingle();
+
+  if (leadError) throw leadError;
+  if (!lead) throw new Error("Lead does not belong to the current clinic.");
+
   const { error } = await supabaseServer
     .from("lead_activity")
     .insert({

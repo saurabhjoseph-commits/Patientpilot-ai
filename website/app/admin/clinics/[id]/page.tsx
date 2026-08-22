@@ -29,7 +29,7 @@ export default async function ClinicPage({ params }: { params: Promise<{ id: str
     .maybeSingle(),
     supabaseServer
       .from("clinic_settings")
-      .select("office_hours,minimum_booking_notice_minutes,maximum_booking_horizon_days,slot_interval_minutes")
+      .select("office_hours,minimum_booking_notice_minutes,maximum_booking_horizon_days,slot_interval_minutes,greeting,language,voice,scheduling_rules,emergency_rules")
       .eq("clinic_id", id)
       .maybeSingle(),
     getClinicOperationalReadiness(id),
@@ -43,7 +43,7 @@ export default async function ClinicPage({ params }: { params: Promise<{ id: str
   const settings = settingsResult.error
     ? (await supabaseServer.from("clinic_settings").select("office_hours").eq("clinic_id", id).maybeSingle()).data
     : settingsResult.data;
-  const settingsRow = (settings ?? {}) as { office_hours?: unknown; minimum_booking_notice_minutes?: unknown; maximum_booking_horizon_days?: unknown; slot_interval_minutes?: unknown };
+  const settingsRow = (settings ?? {}) as { office_hours?: unknown; minimum_booking_notice_minutes?: unknown; maximum_booking_horizon_days?: unknown; slot_interval_minutes?: unknown; greeting?: unknown; language?: unknown; voice?: unknown; scheduling_rules?: unknown; emergency_rules?: unknown };
 
   return (
     <main className="mx-auto max-w-4xl space-y-6">
@@ -58,6 +58,7 @@ export default async function ClinicPage({ params }: { params: Promise<{ id: str
         officeHours={normalizeClinicBusinessHours(settingsRow.office_hours)}
         bookingPolicy={bookingPolicyFromPersistence(settingsRow)}
         policyAvailable={!settingsResult.error}
+        aiSettings={{ greeting: typeof settingsRow.greeting === "string" ? settingsRow.greeting : `Welcome to ${data.name}.`, language: typeof settingsRow.language === "string" ? settingsRow.language : "english", voice: typeof settingsRow.voice === "string" ? settingsRow.voice : "alloy", schedulingRules: settingsRow.scheduling_rules, emergencyRules: settingsRow.emergency_rules }}
       />
       <ClinicDangerZone clinicId={id} clinicName={data.name} canDelete={canManageDoctorsGlobally(authorization)} />
     </main>

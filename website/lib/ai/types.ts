@@ -31,7 +31,14 @@ export type IntentAnalysis =
  */
 
 export interface AIContext {
+  clinicId: string;
   clinicName: string;
+
+  country?: string;
+
+  languageMode: import("@/lib/platform/domain/clinic-language").ClinicLanguageMode;
+
+  handoffPhone?: string;
 
   timezone: string;
 

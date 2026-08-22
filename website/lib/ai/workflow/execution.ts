@@ -31,6 +31,7 @@ import type { AIConversationSession } from "@/lib/ai/core";
  */
 
 export interface ExecutionRequest {
+  clinicId: string;
   callId: string;
 
   session: AIConversationSession;
@@ -78,7 +79,7 @@ export async function executeWorkflow(
     );
 
   return {
-    session: getSession(callId),
+    session: (await getSession(request.clinicId, callId)) ?? session,
     toolResult,
     executed: true,
   };

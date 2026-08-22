@@ -90,7 +90,7 @@ export default async function AppointmentsPage() {
 
                 <td className="p-4">
                   <span className="rounded-full bg-green-100 px-3 py-1 text-sm text-green-700">
-                    Confirmed
+                    {appointment.status}
                   </span>
                 </td>
 

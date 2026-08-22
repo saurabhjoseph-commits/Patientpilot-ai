@@ -50,8 +50,8 @@ export async function generateWorkflowResponse(
       latestMessage: request.latestMessage,
     });
 
-  addMessage(
-    request.session.callId,
+  await addMessage(
+    request.session.clinicId, request.session.callId,
     {
       id: crypto.randomUUID(),
       role: "assistant",

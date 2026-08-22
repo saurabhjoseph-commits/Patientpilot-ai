@@ -18,6 +18,10 @@ export type SummaryOutcome =
 export interface CallSummary {
   id: string;
 
+  clinicId: string;
+
+  callId: string;
+
   callSid: string;
 
   clinicName: string;
@@ -51,6 +55,10 @@ export interface CallSummary {
  * Used when creating a summary.
  */
 export interface CreateSummaryInput {
+  clinicId: string;
+
+  callId: string;
+
   callSid: string;
 
   clinicName: string;
@@ -105,6 +113,8 @@ export interface UpdateSummaryInput {
  * Search filters.
  */
 export interface SummaryFilters {
+  clinicId: string;
+
   callSid?: string;
 
   patientName?: string;

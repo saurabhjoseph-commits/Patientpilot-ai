@@ -8,6 +8,7 @@ import { normalizeClinicBusinessHours, validateClinicBusinessHours } from "@/lib
 import { bookingPolicyToPersistence, type ClinicBookingPolicy, validateClinicBookingPolicy } from "@/lib/clinic/booking-policy";
 import { blockingClinicDependencies, clinicDependencyCounts } from "@/lib/clinic/deletion-safety";
 import { captureClinicDeletionRecipient, createDeletionNotification, deliverDeletionNotification } from "@/lib/clinic/deletion-notification";
+import { normalizeClinicLanguageMode } from "@/lib/platform/domain/clinic-language";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -24,6 +25,7 @@ const editableFields = [
 
 type EditableField = (typeof editableFields)[number];
 type ClinicUpdate = { name: string } & Partial<Record<EditableField, string | null | undefined>>;
+type AISettingsUpdate = { language: string; greeting: string; voice: string; humanHandoff: boolean; afterHoursMode: "voicemail" | "take-message" | "emergency-forward"; escalationPhone: string | null };
 
 function optionalText(input: Record<string, unknown>, field: EditableField): string | null | undefined {
   const value = input[field];
@@ -36,6 +38,24 @@ function clinicSnapshot(clinic: Record<string, unknown>): ClinicUpdate {
     name: String(clinic.name ?? ""),
     ...Object.fromEntries(editableFields.map((field) => [field, typeof clinic[field] === "string" ? clinic[field] : null])),
   } as ClinicUpdate;
+}
+
+function record(value: unknown): Record<string, unknown> { return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {}; }
+
+function parseAISettings(input: Record<string, unknown>, country: string | null): AISettingsUpdate | null | string {
+  if (!Object.prototype.hasOwnProperty.call(input, "aiSettings")) return null;
+  const value = input.aiSettings;
+  if (!value || typeof value !== "object" || Array.isArray(value)) return "Invalid AI receptionist settings.";
+  const settings = value as Record<string, unknown>;
+  const greeting = typeof settings.greeting === "string" ? settings.greeting.trim() : "";
+  const voice = typeof settings.voice === "string" ? settings.voice.trim() : "";
+  const requestedLanguage = typeof settings.language === "string" ? settings.language.trim() : "";
+  const afterHoursMode = settings.afterHoursMode;
+  if (!greeting || !voice || !requestedLanguage) return "AI greeting, language, and voice are required.";
+  if (afterHoursMode !== "voicemail" && afterHoursMode !== "take-message" && afterHoursMode !== "emergency-forward") return "Invalid after-hours handling mode.";
+  const escalationPhone = typeof settings.escalationPhone === "string" && settings.escalationPhone.trim() ? settings.escalationPhone.trim() : null;
+  if (afterHoursMode === "emergency-forward" && !escalationPhone) return "An escalation phone is required for emergency forwarding.";
+  return { greeting, voice, language: normalizeClinicLanguageMode(requestedLanguage, country ?? undefined), humanHandoff: settings.humanHandoff === true, afterHoursMode, escalationPhone };
 }
 
 export async function PATCH(
@@ -86,9 +106,11 @@ export async function PATCH(
     .maybeSingle();
   if (existingError || !existing) return NextResponse.json({ message: "Clinic was not found." }, { status: 404 });
 
-  const shouldUpdateSettings = hasOfficeHours || hasBookingPolicy;
+  const aiSettings = parseAISettings(input, typeof existing.country === "string" ? existing.country : null);
+  if (typeof aiSettings === "string") return NextResponse.json({ message: aiSettings }, { status: 400 });
+  const shouldUpdateSettings = hasOfficeHours || hasBookingPolicy || aiSettings !== null;
   const { data: existingSettings, error: existingSettingsError } = shouldUpdateSettings
-    ? await supabaseServer.from("clinic_settings").select("office_hours").eq("clinic_id", id).maybeSingle()
+    ? await supabaseServer.from("clinic_settings").select("office_hours,scheduling_rules,emergency_rules").eq("clinic_id", id).maybeSingle()
     : { data: null, error: null };
   if (existingSettingsError) return NextResponse.json({ message: "Unable to load clinic settings." }, { status: 500 });
 
@@ -107,6 +129,13 @@ export async function PATCH(
     const settingsUpdate = {
       ...(officeHours ? { office_hours: officeHours } : {}),
       ...(bookingPolicy ? bookingPolicyToPersistence(bookingPolicy) : {}),
+      ...(aiSettings ? {
+        greeting: aiSettings.greeting,
+        language: aiSettings.language,
+        voice: aiSettings.voice,
+        scheduling_rules: { ...record(existingSettings?.scheduling_rules), humanHandoff: aiSettings.humanHandoff, afterHoursMode: aiSettings.afterHoursMode },
+        emergency_rules: { ...record(existingSettings?.emergency_rules), escalationPhone: aiSettings.escalationPhone, afterHoursMode: aiSettings.afterHoursMode },
+      } : {}),
     };
     const settingsResult = existingSettings
       ? await supabaseServer.from("clinic_settings").update(settingsUpdate).eq("clinic_id", id)

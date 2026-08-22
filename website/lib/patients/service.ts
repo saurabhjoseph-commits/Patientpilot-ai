@@ -51,16 +51,17 @@ export async function createPatientService(
  * Get patient.
  */
 export async function getPatientService(
-  id: string
+  id: string,
+  clinicId: string,
 ): Promise<Patient | null> {
-  return getPatient(id);
+  return getPatient(id, clinicId);
 }
 
 /**
  * List patients.
  */
 export async function listPatientsService(
-  filters?: PatientFilters
+  filters: PatientFilters
 ): Promise<Patient[]> {
   return listPatients(filters);
 }
@@ -70,6 +71,7 @@ export async function listPatientsService(
  */
 export async function updatePatientService(
   id: string,
+  clinicId: string,
   input: UpdatePatientInput
 ): Promise<Patient> {
   const validation =
@@ -81,25 +83,27 @@ export async function updatePatientService(
     );
   }
 
-  return updatePatient(id, input);
+  return updatePatient(id, clinicId, input);
 }
 
 /**
  * Delete patient.
  */
 export async function deletePatientService(
-  id: string
+  id: string,
+  clinicId: string,
 ): Promise<void> {
-  return deletePatient(id);
+  return deletePatient(id, clinicId);
 }
 
 /**
  * Find patient by phone.
  */
 export async function findPatientByPhoneService(
-  phoneNumber: string
+  clinicId: string,
+  phoneNumber: string,
 ): Promise<Patient | null> {
-  return findPatientByPhone(phoneNumber);
+  return findPatientByPhone(clinicId, phoneNumber);
 }
 
 /**
@@ -110,12 +114,14 @@ export async function findOrCreatePatient(
 ): Promise<Patient> {
   const existing =
     await findPatientByPhone(
+      input.clinicId,
       input.phoneNumber
     );
 
   if (existing) {
     return updatePatient(
       existing.id,
+      input.clinicId,
       {
         lastCallDate:
           new Date().toISOString(),
@@ -135,6 +141,7 @@ export async function incrementAppointmentCount(
 ): Promise<Patient> {
   return updatePatient(
     patient.id,
+    patient.clinicId,
     {
       totalAppointments:
         patient.totalAppointments + 1,

@@ -52,7 +52,7 @@ export const leadService = {
       leadId: id,
       type: "Status",
       description: `Status changed to "${status}"`,
-    });
+    }, scope);
 
     return lead;
   },

@@ -3,6 +3,9 @@
 import {
   createSession,
   getSession,
+  updatePatient as updatePatientSession,
+  recordRecognitionFailure as recordRecognitionFailureSession,
+  resetRecognitionFailures as resetRecognitionFailuresSession,
 } from "./session";
 
 import { runWorkflow } from "./workflow";
@@ -14,6 +17,7 @@ import type {
   AIMessage,
   AIResponse,
 } from "./types";
+import type { ClinicLanguageMode } from "@/lib/platform/domain/clinic-language";
 
 /**
  * ============================================================
@@ -33,19 +37,22 @@ export interface ConversationRequest {
  * Legacy API.
  * Called when a new phone call starts.
  */
-export function startConversation(
+export async function startConversation(
+  clinicId: string,
   callId: string,
-): AIConversationSession {
-  return createSession(callId);
+  configuredLanguageMode: ClinicLanguageMode = "english",
+): Promise<AIConversationSession> {
+  return createSession(clinicId, callId, configuredLanguageMode);
 }
 
 /**
  * Legacy API.
  */
-export function getConversation(
+export async function getConversation(
+  clinicId: string,
   callId: string,
-): AIConversationSession {
-  return getSession(callId);
+): Promise<AIConversationSession | null> {
+  return getSession(clinicId, callId);
 }
 
 /**
@@ -63,9 +70,24 @@ export async function continueConversation(
   }
 
   return runWorkflow({
+    clinicId: request.context.clinicId,
     callId: request.callId,
     context: request.context,
     message: request.message,
     intent: request.intent,
   });
+}
+
+/** Stores only the verified caller contact supplied by the telephony boundary. */
+export function updatePatient(clinicId: string, callId: string, patient: AIConversationSession["patient"]): Promise<AIConversationSession> {
+  return updatePatientSession(clinicId, callId, patient);
+}
+
+export async function recordRecognitionFailure(clinicId: string, callId: string): Promise<number> {
+  const session = await recordRecognitionFailureSession(clinicId, callId);
+  return session.recognitionFailureCount;
+}
+
+export async function resetRecognitionFailures(clinicId: string, callId: string): Promise<void> {
+  await resetRecognitionFailuresSession(clinicId, callId);
 }

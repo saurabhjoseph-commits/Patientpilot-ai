@@ -29,6 +29,8 @@ export async function createSummary(
   const { data, error } = await supabaseServer
     .from(TABLE)
     .insert({
+      clinic_id: input.clinicId,
+      call_id: input.callId,
       call_sid: input.callSid,
       clinic_name: input.clinicName,
       patient_name: input.patientName,
@@ -56,12 +58,14 @@ export async function createSummary(
  * Get summary.
  */
 export async function getSummary(
-  id: string
+  id: string,
+  clinicId: string,
 ): Promise<CallSummary | null> {
   const { data, error } = await supabaseServer
     .from(TABLE)
     .select("*")
     .eq("id", id)
+    .eq("clinic_id", clinicId)
     .maybeSingle();
 
   if (error) {
@@ -75,12 +79,14 @@ export async function getSummary(
  * Find summary by Call SID.
  */
 export async function getSummaryByCallSid(
-  callSid: string
+  callSid: string,
+  clinicId: string,
 ): Promise<CallSummary | null> {
   const { data, error } = await supabaseServer
     .from(TABLE)
     .select("*")
     .eq("call_sid", callSid)
+    .eq("clinic_id", clinicId)
     .maybeSingle();
 
   if (error) {
@@ -94,7 +100,7 @@ export async function getSummaryByCallSid(
  * List summaries.
  */
 export async function listSummaries(
-  filters?: SummaryFilters
+  filters: SummaryFilters
 ): Promise<CallSummary[]> {
   let query = supabaseServer
     .from(TABLE)
@@ -102,6 +108,8 @@ export async function listSummaries(
     .order("created_at", {
       ascending: false,
     });
+
+  query = query.eq("clinic_id", filters.clinicId);
 
   if (filters?.callSid) {
     query = query.eq(
@@ -152,7 +160,8 @@ export async function listSummaries(
  */
 export async function updateSummary(
   id: string,
-  input: UpdateSummaryInput
+  input: UpdateSummaryInput,
+  clinicId: string,
 ): Promise<CallSummary> {
   const updates: Record<string, unknown> = {};
 
@@ -192,6 +201,7 @@ export async function updateSummary(
       .from(TABLE)
       .update(updates)
       .eq("id", id)
+      .eq("clinic_id", clinicId)
       .select()
       .single();
 
@@ -206,12 +216,14 @@ export async function updateSummary(
  * Delete summary.
  */
 export async function deleteSummary(
-  id: string
+  id: string,
+  clinicId: string,
 ): Promise<void> {
   const { error } = await supabaseServer
     .from(TABLE)
     .delete()
-    .eq("id", id);
+    .eq("id", id)
+    .eq("clinic_id", clinicId);
 
   if (error) {
     throw error;
@@ -221,23 +233,43 @@ export async function deleteSummary(
 /**
  * Convert database row into CallSummary.
  */
-function mapSummary(
-  row: any
-): CallSummary {
+interface SummaryRow {
+  id: string;
+  clinic_id: string;
+  call_id: string;
+  call_sid: string;
+  clinic_name: string;
+  patient_name: string | null;
+  phone_number: string | null;
+  intent: string;
+  outcome: CallSummary["outcome"];
+  summary: string;
+  action_items: string[] | null;
+  appointment_id: string | null;
+  patient_id: string | null;
+  confidence: number;
+  duration_seconds: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+function mapSummary(row: SummaryRow): CallSummary {
   return {
     id: row.id,
+    clinicId: row.clinic_id,
+    callId: row.call_id,
     callSid: row.call_sid,
     clinicName: row.clinic_name,
-    patientName: row.patient_name,
-    phoneNumber: row.phone_number,
+    patientName: row.patient_name ?? undefined,
+    phoneNumber: row.phone_number ?? undefined,
     intent: row.intent,
     outcome: row.outcome,
     summary: row.summary,
     actionItems: row.action_items ?? [],
-    appointmentId: row.appointment_id,
-    patientId: row.patient_id,
+    appointmentId: row.appointment_id ?? undefined,
+    patientId: row.patient_id ?? undefined,
     confidence: row.confidence,
-    durationSeconds: row.duration_seconds,
+    durationSeconds: row.duration_seconds ?? undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

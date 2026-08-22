@@ -30,7 +30,8 @@ export async function POST(request: NextRequest) {
     p_city: input.city.trim(), p_state: input.state.trim(), p_country: input.country.trim(), p_timezone: input.timezone.trim(),
     p_greeting: input.aiSettings.greeting.trim() || `Welcome to ${input.name.trim()}.`,
     p_office_hours: input.businessHours, p_voice: input.aiSettings.voice, p_language: input.aiSettings.language,
-    p_scheduling_rules: { aiEnabled: input.aiSettings.enabled, appointmentBooking: input.aiSettings.appointmentBooking, appointmentCancellation: input.aiSettings.appointmentCancellation, appointmentRescheduling: input.aiSettings.appointmentRescheduling, humanHandoff: input.aiSettings.humanHandoff, transcriptStorage: input.aiSettings.transcriptStorage, callRecording: input.aiSettings.callRecording },
+    p_scheduling_rules: { aiEnabled: input.aiSettings.enabled, appointmentBooking: input.aiSettings.appointmentBooking, appointmentCancellation: input.aiSettings.appointmentCancellation, appointmentRescheduling: input.aiSettings.appointmentRescheduling, humanHandoff: input.aiSettings.humanHandoff, afterHoursMode: input.aiSettings.afterHoursMode, transcriptStorage: input.aiSettings.transcriptStorage, callRecording: input.aiSettings.callRecording },
+    p_emergency_rules: { escalationPhone: input.emergencyPhone?.trim() || null, afterHoursMode: input.aiSettings.afterHoursMode },
   });
 
   if (error) {

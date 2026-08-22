@@ -24,8 +24,10 @@ test("appointment lifecycle preserves chronology and cancellation history", () =
   const checkedIn = service.lifecycle(fixture.ownerA, fixture.clinicA, appointment.id, "check-in", "2026-08-10T09:05:00Z");
   const complete = service.lifecycle(fixture.ownerA, fixture.clinicA, appointment.id, "complete", "2026-08-10T09:40:00Z");
   assert.equal(checkedIn.checkedInAt < complete.completedAt, true); assert.equal(complete.status, "Completed");
-  const cancelled = service.lifecycle(fixture.ownerA, fixture.clinicA, appointment.id, "cancel");
-  assert.equal(cancelled.status, "Cancelled"); assert.equal(cancelled.id, appointment.id);
+  assertRejects(() => service.lifecycle(fixture.ownerA, fixture.clinicA, appointment.id, "cancel"), "cannot be cancelled");
+  const cancellable = service.appointment(fixture.ownerA, fixture.clinicA, input({ appointmentTime: "11:00" }));
+  const cancelled = service.lifecycle(fixture.ownerA, fixture.clinicA, cancellable.id, "cancel");
+  assert.equal(cancelled.status, "Cancelled"); assert.equal(cancelled.id, cancellable.id);
 });
 
 test("schedule workflow creates, edits, rejects overlaps, and ends without changing clinic", () => {
