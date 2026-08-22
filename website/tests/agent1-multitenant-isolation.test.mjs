@@ -20,6 +20,18 @@ test("Agent 1 patient persistence derives and enforces clinic ownership for both
   assert.match(migration, /alter column clinic_id set not null/);
 });
 
+test("Agent 1 patient migration selects one validated UUID clinic without unsupported aggregation", () => {
+  const migration = read("lib/supabase/migrations/0024_agent1_patient_clinic_isolation_review.sql");
+  assert.doesNotMatch(migration, /min\s*\(\s*c\.clinic_id\s*\)/i);
+  assert.match(migration, /select c\.clinic_id[\s\S]*group by c\.clinic_id[\s\S]*limit 1/);
+  assert.match(migration, /count\(\*\) = count\(c\.clinic_id\)[\s\S]*count\(distinct c\.clinic_id\) = 1/);
+  assert.match(migration, /left join public\.calls c on c\.call_sid = s\.call_sid/);
+  assert.match(migration, /ambiguous, missing, or cross-clinic call-summary ownership/);
+  assert.match(migration, /no deterministic call-summary ownership source/);
+  assert.match(migration, /deterministic ownership backfill left null clinic_id values/);
+  assert.match(migration, /^begin;[\s\S]*commit;/m);
+});
+
 test("Agent 1 calls, transcripts, appointments, and leads retain server-derived clinic scope", () => {
   const calls = read("app/api/calls/route.ts");
   const transcript = read("app/api/transcript/route.ts");

@@ -59,10 +59,12 @@ $$;
 
 update public.patients p
 set clinic_id = (
-  select min(c.clinic_id)
+  select c.clinic_id
   from public.call_summaries s
   join public.calls c on c.call_sid = s.call_sid
   where s.patient_id = p.id
+  group by c.clinic_id
+  limit 1
 );
 
 do $$
