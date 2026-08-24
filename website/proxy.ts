@@ -10,6 +10,9 @@ export async function proxy(request: NextRequest) {
     const canonical = new URL(request.nextUrl.pathname + request.nextUrl.search, getApplicationOrigin());
     return NextResponse.redirect(canonical, 308);
   }
+  // Credential entry and recovery endpoints must reach their Route Handlers
+  // without attempting compatibility identity validation first.
+  if (request.nextUrl.pathname.startsWith("/api/auth/")) return NextResponse.next();
   const protectedPath = request.nextUrl.pathname.startsWith("/admin") || request.nextUrl.pathname.startsWith("/api/admin/") || ["/api/appointments", "/api/calls", "/api/transcript", "/api/test-console"].includes(request.nextUrl.pathname) || request.nextUrl.pathname.startsWith("/api/leads/");
   if (!protectedPath) return NextResponse.next();
   const isApi = request.nextUrl.pathname.startsWith("/api/");
@@ -37,4 +40,4 @@ function unauthenticated(request: NextRequest, isApi: boolean): NextResponse {
   return isApi ? NextResponse.json({ error: "Unauthorized" }, { status: 401 }) : NextResponse.redirect(new URL("/login", request.url));
 }
 
-export const config = { matcher: ["/admin/:path*", "/api/admin/:path*", "/api/appointments", "/api/calls", "/api/transcript", "/api/test-console", "/api/leads/:path*", "/auth/callback", "/set-password", "/reset-password", "/login", "/forgot-password", "/api/auth/:path*"] };
+export const config = { matcher: ["/admin/:path*", "/api/admin/:path*", "/api/appointments", "/api/calls", "/api/transcript", "/api/test-console", "/api/leads/:path*", "/auth/callback", "/set-password", "/reset-password", "/login", "/forgot-password"] };
