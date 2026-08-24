@@ -52,10 +52,12 @@ test("owner activation verifies only allowed token flows and marks a matching pr
 
 test("tenant-scoped owner dashboard and global super-admin behavior remain server derived", () => {
   const auth = read("lib/auth-server.ts");
+  const rolePolicy = read("lib/auth/profile-role-policy.ts");
   const context = read("lib/doctors/clinic-context.ts");
   const dashboard = read("app/admin/page.tsx");
   assert.match(auth, /profile\.clinic_id/);
-  assert.match(auth, /roleMap/);
+  assert.match(auth, /resolveProfileRolePolicy/);
+  assert.match(rolePolicy, /super_admin: "super-admin"/);
   assert.match(context, /Cross-clinic doctor access is not permitted/);
   assert.match(context, /DoctorsManageGlobal/);
   assert.match(dashboard, /identity\.clinicId/);

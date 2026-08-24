@@ -15,10 +15,10 @@ test("H2.1A preserves legacy dentist while adding canonical doctor role", () => 
 });
 
 test("doctor and dentist use the same fail-closed application role mapping", () => {
-  for (const path of ["lib/auth-server.ts", "lib/infrastructure/identity/SupabaseAuthCompatibilityAdapter.ts"]) {
-    const source = read(path);
-    assert.match(source, /dentist: "dentist", doctor: "dentist"/);
-  }
+  const policy = read("lib/auth/profile-role-policy.ts");
+  assert.match(policy, /dentist: "dentist"/);
+  assert.match(policy, /doctor: "dentist"/);
+  for (const path of ["lib/auth-server.ts", "lib/infrastructure/identity/SupabaseAuthCompatibilityAdapter.ts"]) assert.match(read(path), /resolveProfileRolePolicy/);
 });
 
 test("doctor identity resolver requires one active same-clinic linked record", () => {
