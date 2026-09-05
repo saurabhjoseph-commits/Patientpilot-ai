@@ -1,7 +1,8 @@
 import { apiHandler, created } from "@/lib/core/api";
 import { leadService } from "@/lib/leads/service";
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { ClinicResolutionError, resolvePublicIntakeClinic } from "@/lib/clinic/clinic-scope";
+import { deliverDemoRequestEmail, enqueueDemoRequestEmails } from "@/lib/leads/demo-request-email";
 
 export const POST = apiHandler(async (request) => {
   const body = await request.json();
@@ -17,9 +18,12 @@ export const POST = apiHandler(async (request) => {
   }
 
   const lead = await leadService.bookDemo(body, clinic);
+  let deliveryIds: readonly string[] = [];
+  try { deliveryIds = await enqueueDemoRequestEmails(lead, clinic); } catch { /* The saved enquiry remains authoritative even if the outbox is unavailable. */ }
+  if (deliveryIds.length) after(async () => { await Promise.allSettled(deliveryIds.map((id) => deliverDemoRequestEmail(id))); });
 
   return created(
     lead,
-    "Demo booked successfully!"
+    "Your demo request has been received."
   );
 });

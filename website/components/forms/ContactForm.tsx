@@ -81,7 +81,7 @@ export default function ContactForm() {
         </h2>
 
         <p className="mt-4 text-lg text-slate-700">
-          Your free strategy session has been booked successfully.
+          Your demo request has been received.
         </p>
 
         <p className="mt-2 text-slate-600">
