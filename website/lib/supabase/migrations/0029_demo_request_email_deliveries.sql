@@ -39,6 +39,8 @@ alter table public.demo_request_email_events enable row level security;
 -- No browser policy. The server-side service role owns enqueue, delivery, and retry.
 revoke all on public.demo_request_email_deliveries from anon, authenticated;
 revoke all on public.demo_request_email_events from anon, authenticated;
+revoke all on public.demo_request_email_deliveries from service_role;
+revoke all on public.demo_request_email_events from service_role;
 grant select, insert, update on public.demo_request_email_deliveries to service_role;
 grant select, insert on public.demo_request_email_events to service_role;
 

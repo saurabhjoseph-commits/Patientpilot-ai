@@ -18,6 +18,7 @@ test("customer acknowledgement and team notification use the approved destinatio
   assert.match(email, /customer_acknowledgement/);
   assert.match(email, /team_notification/);
   assert.match(email, /support@patientpilot-ai\.com/);
+  assert.match(email, /process\.env\.DEMO_REQUEST_TEAM_EMAIL \?\? TEAM_EMAIL/);
   assert.match(email, /Your PatientPilot AI demo request has been received/);
   assert.match(read("components/forms/ContactForm.tsx"), /Your demo request has been received\./);
   assert.doesNotMatch(read("components/forms/ContactForm.tsx"), /session has been booked|booked successfully/i);

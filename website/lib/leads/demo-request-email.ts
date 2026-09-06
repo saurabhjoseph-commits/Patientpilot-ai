@@ -11,9 +11,12 @@ const TEAM_EMAIL = "support@patientpilot-ai.com";
 const MAX_ATTEMPTS = 5;
 
 export async function enqueueDemoRequestEmails(lead: Lead, scope: ClinicScope): Promise<readonly string[]> {
+  // Preview certification can explicitly route the internal notification to a
+  // synthetic inbox. Production retains the established support address.
+  const teamEmail = process.env.DEMO_REQUEST_TEAM_EMAIL ?? TEAM_EMAIL;
   const rows = [
     { clinic_id: scope.clinicId, lead_id: lead.id, kind: "customer_acknowledgement", recipient_email: lead.email },
-    { clinic_id: scope.clinicId, lead_id: lead.id, kind: "team_notification", recipient_email: TEAM_EMAIL },
+    { clinic_id: scope.clinicId, lead_id: lead.id, kind: "team_notification", recipient_email: teamEmail },
   ] satisfies readonly Record<string, unknown>[];
   const { data, error } = await supabaseServer.from("demo_request_email_deliveries").upsert(rows, { onConflict: "lead_id,kind" }).select("id");
   if (error) throw new Error("Unable to queue demo-request email delivery.");
