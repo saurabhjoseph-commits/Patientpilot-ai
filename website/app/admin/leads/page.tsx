@@ -4,6 +4,16 @@ import { ResponsiveTable } from "@/components/ui/responsive";
 import { requireAdminPagePermission } from "@/lib/auth-server";
 import { Permissions } from "@/lib/platform/domain/identity";
 
+type LeadRow = {
+  id: number;
+  clinic_name: string;
+  dentist_name: string;
+  email: string;
+  phone: string;
+  monthly_calls: number | null;
+  status: string | null;
+};
+
 export default async function LeadsPage() {
   const identity = await requireAdminPagePermission(Permissions.LeadsRead);
   const { data: leads, error } = await supabaseServer
@@ -53,7 +63,7 @@ export default async function LeadsPage() {
 
           <tbody>
             {leads && leads.length > 0 ? (
-              leads.map((lead: any) => (
+              leads.map((lead: LeadRow) => (
                 <tr
                   key={lead.id}
                   className="border-t hover:bg-slate-50"

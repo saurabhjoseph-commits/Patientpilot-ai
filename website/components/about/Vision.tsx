@@ -86,12 +86,12 @@ export default function Vision() {
         <div className="mt-20 rounded-3xl bg-gradient-to-r from-blue-600 to-blue-700 p-10 text-center text-white">
 
           <h3 className="text-4xl font-bold">
-            We're Just Getting Started
+            We&apos;re Just Getting Started
           </h3>
 
           <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-blue-100">
             PatientPilot AI is committed to continuously evolving alongside
-            dental practices. As technology advances, we'll keep building
+            dental practices. As technology advances, we&apos;ll keep building
             smarter tools that help practices provide outstanding service and
             operate more efficiently.
           </p>

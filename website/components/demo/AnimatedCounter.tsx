@@ -29,8 +29,10 @@ export default function AnimatedCounter({
 
   useEffect(() => {
     if (prefersReducedMotion) {
-      setDisplayValue(value);
-      return;
+      const animationFrame = requestAnimationFrame(() => {
+        setDisplayValue(value);
+      });
+      return () => cancelAnimationFrame(animationFrame);
     }
 
     let animationFrame: number;

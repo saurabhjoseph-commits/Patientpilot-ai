@@ -22,10 +22,23 @@ export function toDatabaseLead(
   };
 }
 
+type DatabaseLeadRow = {
+  id: number;
+  clinic_name: string;
+  dentist_name: string;
+  email: string;
+  phone: string;
+  monthly_calls: number;
+  message: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string | null;
+};
+
 /**
  * Maps a Supabase row into a Lead domain model.
  */
-export function fromDatabaseLead(row: any): Lead {
+export function fromDatabaseLead(row: DatabaseLeadRow): Lead {
   return {
     id: row.id,
     clinicName: row.clinic_name,

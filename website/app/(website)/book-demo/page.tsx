@@ -42,7 +42,7 @@ export default function BookDemoPage() {
                 <Calendar size={40} />
                 <div>
                   <h3 className="text-2xl font-bold">
-                    What You'll Learn
+                    What You&apos;ll Learn
                   </h3>
                   <p className="text-blue-100">
                     How AI can transform your front desk.
@@ -70,7 +70,7 @@ export default function BookDemoPage() {
             </h2>
 
             <p className="mt-3 text-slate-500">
-              Fill out the form and we'll contact you shortly.
+              Fill out the form and we&apos;ll contact you shortly.
             </p>
 
             <div className="mt-10">

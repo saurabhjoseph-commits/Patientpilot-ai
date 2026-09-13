@@ -8,7 +8,7 @@ export default function ROICalculator() {
           </span>
 
           <h2 className="mt-6 text-4xl font-bold text-slate-900">
-            See How Much Revenue You're Missing
+            See How Much Revenue You&apos;re Missing
           </h2>
 
           <p className="mt-4 text-lg text-slate-600">

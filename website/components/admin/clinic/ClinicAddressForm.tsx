@@ -42,7 +42,7 @@ export default function ClinicAddressForm({
           </h2>
 
           <p className="text-sm text-muted-foreground">
-            Enter the clinic's physical location and regional settings.
+            Enter the clinic&apos;s physical location and regional settings.
           </p>
         </div>
       </div>

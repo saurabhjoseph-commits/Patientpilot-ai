@@ -105,7 +105,7 @@ export default function CallTranscript({
       <div className="border-t border-slate-200 bg-white px-6 py-4">
         <div className="flex items-center gap-3 text-sm text-slate-600">
           <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-emerald-500" />
-          AI is actively listening for the patient's response...
+          AI is actively listening for the patient&apos;s response...
         </div>
       </div>
     </motion.div>

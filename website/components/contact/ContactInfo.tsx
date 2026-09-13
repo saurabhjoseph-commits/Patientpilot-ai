@@ -64,8 +64,8 @@ export default function ContactInfo() {
           </h2>
 
           <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-slate-600">
-            Whether you're interested in PatientPilot AI, have questions
-            about pricing, or want to schedule a demo, we'd love to hear
+            Whether you&apos;re interested in PatientPilot AI, have questions
+            about pricing, or want to schedule a demo, we&apos;d love to hear
             from you.
           </p>
 

@@ -16,7 +16,7 @@ export default function Hero() {
         </h1>
 
         <p className="mx-auto mt-8 max-w-3xl text-xl leading-9 text-slate-600">
-          Whether you're a single clinic or a growing multi-location practice,
+          Whether you&apos;re a single clinic or a growing multi-location practice,
           PatientPilot AI has a plan that helps you answer more calls,
           book more appointments, and grow your business.
         </p>

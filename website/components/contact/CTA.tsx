@@ -7,7 +7,7 @@ export default function CTA() {
       <div className="mx-auto max-w-5xl px-6 text-center text-white">
 
         <span className="rounded-full bg-white/20 px-5 py-2 text-sm font-semibold">
-          Let's Talk
+          Let&apos;s Talk
         </span>
 
         <h2 className="mt-8 text-5xl font-extrabold">

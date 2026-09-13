@@ -73,7 +73,7 @@ export default function ClinicBusinessHoursForm({
           </h2>
 
           <p className="text-sm text-muted-foreground">
-            Configure the clinic's operating schedule. These hours will
+            Configure the clinic&apos;s operating schedule. These hours will
             be used by PatientPilot AI for appointment booking,
             scheduling validation, and after-hours call handling.
           </p>
@@ -173,7 +173,7 @@ export default function ClinicBusinessHoursForm({
           <li>Booking appointments</li>
           <li>Suggesting available time slots</li>
           <li>Handling after-hours calls</li>
-          <li>Answering "Are you open?" questions</li>
+          <li>Answering &quot;Are you open?&quot; questions</li>
           <li>Sending appointment reminders</li>
         </ul>
       </div>

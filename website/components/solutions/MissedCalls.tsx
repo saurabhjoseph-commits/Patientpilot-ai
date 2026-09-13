@@ -48,7 +48,7 @@ export default function MissedCalls() {
 
           <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-slate-600">
             Dental practices lose thousands of dollars every month because
-            potential patients can't reach someone when they call.
+            potential patients can&apos;t reach someone when they call.
             PatientPilot AI automatically follows up, answers questions,
             and helps convert those missed calls into booked appointments.
           </p>

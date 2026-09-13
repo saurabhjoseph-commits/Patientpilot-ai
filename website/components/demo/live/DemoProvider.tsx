@@ -32,6 +32,9 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   const progress = getDemoProgress(currentMessageIndex, scheduler.totalMessages);
   const stage = getDemoStage(currentMessageIndex, scenario.messages);
   const audio = useCallback(() => (audioRef.current ??= createDemoAudioManager()), []);
+  const showSoundNotice = useCallback(() => {
+    window.setTimeout(() => setSoundNotice("Sound is muted by your browser. Tap Sound On."), 0);
+  }, []);
 
   const clearTimers = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -66,7 +69,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       if (cancelled) return;
       if (step.message.speaker !== "system") {
         const spoken = await audio().speak(step.message.text, step.message.speaker);
-        if (!spoken && soundEnabled) setSoundNotice("Sound is muted by your browser. Tap Sound On.");
+        if (!spoken && soundEnabled) showSoundNotice();
       }
       if (cancelled) return;
       const isLast = step.isLast;
@@ -76,21 +79,21 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     };
     void runTurn();
     return () => { cancelled = true; if (conversationRef.current) clearTimeout(conversationRef.current); audioRef.current?.stopAll(); };
-  }, [audio, currentMessageIndex, isPlaying, nextMessage, scheduler, soundEnabled]);
+  }, [audio, currentMessageIndex, isPlaying, nextMessage, scheduler, showSoundNotice, soundEnabled]);
 
   useEffect(() => {
     if (!isPlaying) return;
-    if (stage === "ringing") { if (!audio().playRingtone() && soundEnabled) setSoundNotice("Sound is muted by your browser. Tap Sound On."); return; }
+    if (stage === "ringing") { if (!audio().playRingtone() && soundEnabled) showSoundNotice(); return; }
     audioRef.current?.stopRingtone();
-    if (stage === "connected" && !connectedRef.current) { connectedRef.current = true; if (!audio().playConnectTone() && soundEnabled) setSoundNotice("Sound is muted by your browser. Tap Sound On."); }
-  }, [isPlaying, stage, soundEnabled]);
+    if (stage === "connected" && !connectedRef.current) { connectedRef.current = true; if (!audio().playConnectTone() && soundEnabled) showSoundNotice(); }
+  }, [audio, isPlaying, showSoundNotice, stage, soundEnabled]);
 
   useEffect(() => {
     if (state !== "completed" || completedRef.current) return;
     completedRef.current = true;
     audioRef.current?.stopAll();
-    if (soundEnabled && !audio().playCompletionTone()) setSoundNotice("Sound is muted by your browser. Tap Sound On.");
-  }, [state, soundEnabled]);
+    if (soundEnabled && !audio().playCompletionTone()) showSoundNotice();
+  }, [audio, showSoundNotice, soundEnabled, state]);
 
   useEffect(() => () => { clearTimers(); audioRef.current?.dispose(); }, [clearTimers]);
 

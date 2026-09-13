@@ -16,7 +16,7 @@ export default function ROI() {
           </h2>
 
           <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-slate-600">
-            PatientPilot AI isn't just another software expense—it's designed
+            PatientPilot AI isn&apos;t just another software expense—it&apos;s designed
             to help you recover missed opportunities and grow your practice.
           </p>
         </div>
@@ -71,7 +71,7 @@ export default function ROI() {
           </h3>
 
           <p className="mx-auto mt-4 max-w-2xl text-lg text-blue-100">
-            Every practice is different. Book a free demo and we'll show you
+            Every practice is different. Book a free demo and we&apos;ll show you
             how PatientPilot AI can fit into your workflow.
           </p>
 

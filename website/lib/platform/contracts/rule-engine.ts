@@ -59,8 +59,7 @@ export interface RuleDefinition {
   readonly actions: readonly RuleAction[];
 }
 
-export interface RuleExecutionContext
-  extends ExpressionContext {}
+export type RuleExecutionContext = ExpressionContext;
 
 export interface RuleExecutionResult {
   /**

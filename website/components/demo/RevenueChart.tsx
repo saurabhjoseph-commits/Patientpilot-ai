@@ -141,7 +141,7 @@ export default function RevenueChart() {
 
         <div className="flex flex-col justify-center rounded-2xl bg-slate-50 p-6">
           <p className="text-sm text-slate-500">
-            Today's Recovery
+            Today&apos;s Recovery
           </p>
 
           <h3 className="mt-2 text-4xl font-bold text-slate-900">

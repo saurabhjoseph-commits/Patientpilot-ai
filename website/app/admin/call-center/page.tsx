@@ -25,7 +25,7 @@ export default async function CallCenterPage() {
         </div>
 
         <div className="rounded-xl border bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold">Today's Calls</h2>
+          <h2 className="text-lg font-semibold">Today&apos;s Calls</h2>
           <p className="mt-2 text-4xl font-bold">0</p>
           <p className="mt-2 text-sm text-slate-500">
             Calls handled today.

@@ -14,6 +14,40 @@ import type {
   UpdateClinicRequest,
 } from "./types";
 
+type DatabaseClinicRow = {
+  id: string;
+  slug: string;
+  name: string;
+  status: Clinic["status"];
+  email: string;
+  phone: string;
+  website: string | null;
+  country: string;
+  timezone: string;
+  currency: string;
+  logo_url: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+function fromDatabaseClinic(row: DatabaseClinicRow): Clinic {
+  return toClinic({
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    status: row.status,
+    email: row.email,
+    phone: row.phone,
+    website: row.website,
+    country: row.country,
+    timezone: row.timezone,
+    currency: row.currency,
+    logoUrl: row.logo_url,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  });
+}
+
 export class SupabaseClinicRepository
   implements ClinicRepository
 {
@@ -36,7 +70,7 @@ export class SupabaseClinicRepository
       });
     }
 
-    return data ? toClinic(data as any) : null;
+    return data ? fromDatabaseClinic(data as DatabaseClinicRow) : null;
   }
 
   async findBySlug(slug: string): Promise<Clinic | null> {
@@ -54,7 +88,7 @@ export class SupabaseClinicRepository
       });
     }
 
-    return data ? toClinic(data as any) : null;
+    return data ? fromDatabaseClinic(data as DatabaseClinicRow) : null;
   }
 
   async existsBySlug(slug: string): Promise<boolean> {
@@ -88,7 +122,7 @@ export class SupabaseClinicRepository
 
     return {
       data: (data ?? []).map((row) =>
-        toClinic(row as any),
+        fromDatabaseClinic(row as DatabaseClinicRow),
       ),
       total: count ?? 0,
       page,

@@ -80,13 +80,18 @@ export default function LiveMonitor() {
   }
 
   useEffect(() => {
-    loadCalls();
+    const initialLoad = setTimeout(() => {
+      void loadCalls();
+    }, 0);
 
     const interval = setInterval(() => {
       loadCalls();
     }, 3000);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearTimeout(initialLoad);
+      clearInterval(interval);
+    };
   }, []);
 
   const selectedCall = useMemo(

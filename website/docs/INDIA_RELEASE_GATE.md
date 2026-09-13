@@ -1,6 +1,6 @@
 # PatientPilot India release gate
 
-Date: 2026-08-20. Automated checks are fixture/runtime/source-contract checks, never live infrastructure claims.
+Date: 2026-09-13. Automated checks are fixture/runtime/source-contract checks, never live infrastructure claims.
 
 | Area | Automated evidence | Live validation required |
 | --- | --- | --- |
@@ -23,12 +23,15 @@ Date: 2026-08-20. Automated checks are fixture/runtime/source-contract checks, n
 
 ## Findings
 
-- P0 open: TypeScript and production build fail because the new durable AI session API is asynchronous and clinic-scoped while callers still use the prior synchronous call-ID-only contract. Concurrent after-hours onboarding changes also reference a missing payload field, and a clinic edit language setter widens the validated mode to `string`.
+- RC6 automated gate: 197/197 automated tests pass, TypeScript passes, and lint passes with zero errors.
+- P0 fixed: durable clinic-scoped AI sessions now use the asynchronous, clinic-owned contract; the former call-ID-only boundary is not the release blocker.
 - P1 fixed: speech/status callbacks did not bind `CallSid` to the resolved clinic before state mutation; both now verify durable ownership.
+- P1 open: `/api/ready` must return 200 in staging. It is currently blocked by `TELEPHONY_CLINIC_PHONE_MAP`, which requires a staging-only number; never reuse a production number to satisfy this gate.
+- P1 open: migrations `0024` and `0025` still require staging certification with the two-clinic isolation harness.
 - P1 open: caller rescheduling, cancellation, authoritative pricing/insurance, and human handoff are not end-to-end proven. Implement/validate them or route/disable them for launch.
-- P2: Hindi/Hinglish naturalness, ASR accuracy, emergency scripts, latency, disconnect cleanup, and database concurrency need staging/pilot evidence.
+- P2: real English, Hindi, and Hinglish calls still require staging/pilot validation for recognition, synthesis, accents, emergency scripts, latency, and disconnect cleanup.
 - P3: expand the noise/accent/adversarial multilingual corpus.
 
 ## Decision
 
-**BLOCKED.** Tests must pass on the final shared baseline, TypeScript/build must pass, and P0/P1 items must close or leave launch scope.
+**BLOCKED ON LIVE STAGING EVIDENCE.** Automated checks pass, but launch requires `/api/ready` = 200, a staging-only telephony map, migration `0024`/`0025` certification, and real English, Hindi, and Hinglish call validation. Do not treat this document as evidence of production deployment or production database readiness.

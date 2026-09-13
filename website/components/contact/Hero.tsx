@@ -10,7 +10,7 @@ export default function Hero() {
         </span>
 
         <h1 className="mt-8 text-5xl font-extrabold leading-tight text-slate-900 md:text-6xl">
-          We'd Love to
+          We&apos;d Love to
           <br />
           Hear From You
         </h1>
